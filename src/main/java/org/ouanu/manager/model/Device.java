@@ -19,13 +19,14 @@ public class Device {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String uuid;
+    private String uuid; // The random UUID of the device.
 
     @ManyToOne
     @JoinColumn(name = "user_uuid", referencedColumnName = "uuid", nullable = false)
     private User user;
 
     private String deviceName;
+    private String deviceGroup; // This is what clients use to create their own groups. Something like different regions......
     private String model;
     private String brand;
     private String imei;

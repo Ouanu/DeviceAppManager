@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ApplicaitonRepository extends JpaRepository<Application, Long> {
+public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
     // Find all applications by Device's Uuid.
     @Query("SELECT a FROM Application a WHERE a.device.uuid = :deviceUuid")
@@ -42,5 +42,7 @@ public interface ApplicaitonRepository extends JpaRepository<Application, Long> 
     // Search applicaitons by the device's UUID and app's Name.
     @Query("SELECT a FROM Application a WHERE a.device.uuid = :deviceUuid AND LOWER(a.appName) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Application> searchByAppName(@Param("deviceUuid") String deviceUuid, @Param("query") String query);
+
+
 
 }

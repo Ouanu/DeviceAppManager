@@ -53,8 +53,9 @@ public class UserService {
     public AuthResponse authenticate(AuthRequest authRequest) {
         String username = authRequest.getUsernameOrPhoneNumber();
         System.out.println("in authenticate: " + username);
-        if (userRepository.existsByPhoneNumber(authRequest.getUsernameOrPhoneNumber())) {
+        if (userRepository.existsByPhoneNumber(username)) {
             username = userRepository.findUsernameByPhoneNumber(username);
+            System.out.println("in authenticate: phone to username = " + username);
         }
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

@@ -3,6 +3,8 @@ package org.ouanu.manager.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "applications")
 @Getter
@@ -26,4 +28,5 @@ public class Application {
     private String appVersion;
     private Boolean isSystemApp = false; // Default false
     private Boolean isForceInstallation = false; // Optional installation by default
+    private LocalDateTime updateTime; // This is when you change or upload this app package
 }

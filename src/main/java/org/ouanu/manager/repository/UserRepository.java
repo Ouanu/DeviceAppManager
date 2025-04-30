@@ -2,6 +2,8 @@ package org.ouanu.manager.repository;
 
 import org.ouanu.manager.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -26,5 +28,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUuid(String uuid);
 
     // Find username of the user by the phone number.(Used for login.)
-    String findUsernameByPhoneNumber(String phoneNumber);
+    @Query("SELECT u.username FROM User u WHERE u.phoneNumber = :phoneNumber")
+    String findUsernameByPhoneNumber(@Param("phoneNumber")String phoneNumber);
 }

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class DeviceDTO {
     private String uuid;
     private String deviceName;
+    private String deviceGroup;
     private String model;
     private String brand;
     private String androidVersion;

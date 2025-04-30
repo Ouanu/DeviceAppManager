@@ -31,4 +31,6 @@ public class ApplicationController {
     public ResponseEntity<List<ApplicationDTO>> getDeviceApplications(@PathVariable String deviceUuid) {
         return ResponseEntity.ok(applicationService.getApplicationsByDeviceUuid(deviceUuid));
     }
+
+
 }

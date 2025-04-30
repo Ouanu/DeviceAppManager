@@ -1,6 +1,8 @@
 package org.ouanu.manager.repository;
 
 import org.ouanu.manager.model.Device;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +27,16 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
 
     // Warning!!
     // Delete all devices of the user(userUuid).
-    void deleteByUserUuid(String userUuid);
+    int deleteByUserUuid(String userUuid);
+
+    int deleteByUuid(String uuid);
+
+    // 添加分页查询方法
+    @Query("SELECT d FROM Device d WHERE d.user.uuid = :userUuid")
+    Page<Device> findByUserUuidPageable(@Param("userUuid") String userUuid, Pageable pageable);
+
+    // 可选：添加带过滤条件的分页查询
+    @Query("SELECT d FROM Device d WHERE d.user.uuid = :userUuid AND d.deviceName LIKE %:keyword%")
+    Page<Device> findByUserUuidAndKeyword(@Param("userUuid") String userUuid, @Param("keyword") String keyword, Pageable pageable);
 
 }

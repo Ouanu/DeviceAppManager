@@ -12,4 +12,5 @@ public class ApplicationDTO {
     private String appVersion;
     private Boolean isSystemApp;
     private Boolean isForceInstallation;
+    private String updateTime;
 }
