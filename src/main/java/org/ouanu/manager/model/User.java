@@ -1,59 +1,112 @@
 package org.ouanu.manager.model;
 
-
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-public class User {
+@Builder
+@Data
+public class User implements UserDetails  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, updatable = false)
+    @NotBlank(message = "UUID不能为空")
     private String uuid;
 
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "用户名不能为空")
+    @Size(min = 6, max = 20, message = "用户名长度需在6~20个字符之间")
     private String username;
 
     @Column(nullable = false)
+    @NotBlank(message = "密码不能为空")
     private String password;
 
-    @Column(nullable = false, unique = true)
-    private String phoneNumber;
-
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @NotBlank(message = "手机号不能为空")
+    @Pattern(regexp = "^\\+?[0-9. ()-]{10,25}$", message = "请输入有效的手机号")
+    private String phone;
 
-    private LocalDateTime updatedAt;
+    @Column(nullable = true)
+    @Email(message = "邮箱格式不正确")
+    private String email;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Device> devices;
+    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'CUSTOMER'")
+    @NotBlank(message = "角色不能为空")
+    @Builder.Default
+    private String role = "CUSTOMER";
 
-    public User(@NotBlank(message = "Username cannot be blank.")
-                @Size(min = 7, max = 20, message = "Usernames should be between 7 and 20 characters long.")
-                String username,
-                String encode,
-                @NotBlank(message = "Password cannot be blank.")
-                @Size(min = 8, max = 30, message = "Password length should be between 8 and 30.")
-                @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{6,}$",
-                        message = "The password must contain at least one number, one lowercase letter, one uppercase letter, and one special character")
-                String phoneNumber) {
-        this.username = username;
-        this.phoneNumber = phoneNumber;
-        this.password = encode;
-        this.createdAt = LocalDateTime.now();
-        this.uuid = UUID.randomUUID().toString();
+    @Column(length = 200)
+    @Size(max = 200, message = "备注信息不能超过200个字符")
+    private String remark;
+
+    @Column(name = "expire_date")
+    private LocalDateTime expireDate; // 可添加过期时间段
+
+    @Column(name = "is_locked")
+    @Builder.Default
+    private boolean locked = false; // 账户是否未锁定
+
+    @Column(name = "pwd_update_time")
+    private LocalDateTime passwordUpdateTime; // 可添加密码强制修改时间
+
+    @Column(name = "active")
+    @Builder.Default
+    private boolean active = true; // 账户是否启用
+
+    // 创建时间（由系统自动设置）
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createTime;
+
+    // 最后修改时间（包含活跃时间更新）
+    @LastModifiedDate
+    private LocalDateTime lastModifiedTime;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role));
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return expireDate == null || expireDate.isAfter(LocalDateTime.now());
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        if ("ADMIN".equals(this.role)) {
+            return true; // 管理员永不过期
+        }
+        return passwordUpdateTime == null || passwordUpdateTime.isAfter(LocalDateTime.now().minusYears(70));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return active;
     }
 }

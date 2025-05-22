@@ -1,40 +1,41 @@
 package org.ouanu.manager.controller;
 
-import org.ouanu.manager.dto.AuthRequest;
-import org.ouanu.manager.dto.AuthResponse;
-import org.ouanu.manager.dto.RegisterRequest;
-import org.ouanu.manager.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
+import org.ouanu.manager.dto.ResponseResult;
+import org.ouanu.manager.record.LoginRequest;
+import org.ouanu.manager.record.RegisterRequest;
+import org.ouanu.manager.record.TokenResponse;
+import org.ouanu.manager.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * User API for public
- * You can handle the post in here.
- */
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
-    private final UserService userService;
+    private final AuthService authService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
+//    @RateLimiter(value = 3, key = "#request.ip")
+    @PostMapping("/login")
+    public ResponseEntity<ResponseResult<TokenResponse>> login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return ResponseResult.success(
+                authService.authenticate(request.username(), request.password())
+        );
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
-        userService.register(registerRequest);
-        return new ResponseEntity<>("Successfully registered!", HttpStatus.CREATED);
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> authenticateUser(@Valid @RequestBody AuthRequest authRequest) {
-        AuthResponse authResponse = userService.authenticate(authRequest);
-        return ResponseEntity.ok(authResponse);
+//    @Idempotent(key = "#request.email", expire = 30, timeUnit = TimeUnit.MINUTES)
+    public ResponseEntity<ResponseResult<Void>> register(
+            @Valid @RequestBody RegisterRequest request
+    ) {
+        authService.register(request);
+        return ResponseResult.created();
     }
 
 }

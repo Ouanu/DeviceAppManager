@@ -2,6 +2,7 @@ plugins {
 	java
 	id("org.springframework.boot") version "3.4.4"
 	id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm")
 }
 
 group = "org.ouanu"
@@ -30,12 +31,14 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.auth0:java-jwt:4.4.0")
 	implementation("org.jetbrains:annotations:24.0.0")
+	implementation("com.googlecode.libphonenumber:libphonenumber:8.13.10")
 	compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation(kotlin("stdlib"))
 }
 
 tasks.withType<Test> {

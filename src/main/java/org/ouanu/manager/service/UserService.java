@@ -1,88 +1,86 @@
 package org.ouanu.manager.service;
 
-import org.ouanu.manager.dto.AuthRequest;
-import org.ouanu.manager.dto.AuthResponse;
-import org.ouanu.manager.dto.RegisterRequest;
-import org.ouanu.manager.dto.UserDTO;
-import org.ouanu.manager.exception.AppException;
+import lombok.RequiredArgsConstructor;
+import org.ouanu.manager.dto.UserDto;
+import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.model.User;
 import org.ouanu.manager.repository.UserRepository;
-import org.ouanu.manager.security.JwtService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
+
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.UUID;
+
+// 领域服务层
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
 
-
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-        this.authenticationManager = authenticationManager;
-    }
-
-    public void register(RegisterRequest registerRequest) {
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new AppException("用户名已存在", HttpStatus.BAD_REQUEST);
+    @Transactional
+    public void createUser(UserCreateCommand command) {
+        if (userRepository.existsByUsername(command.username)) {
+            throw new ConflictException("用户名已存在");
+        }
+        if (userRepository.existsByEmail(command.email)) {
+            throw new ConflictException("Email已存在");
+        }
+        if (userRepository.existsByPhone(command.phone)) {
+            throw new ConflictException("手机号已存在");
         }
 
-        if (userRepository.existsByPhoneNumber(registerRequest.getPhoneNumber())) {
-            throw new AppException("手机号已被注册", HttpStatus.BAD_REQUEST);
-        }
-
-        User user = new User(
-                registerRequest.getUsername(),
-                passwordEncoder.encode(registerRequest.getPassword()),
-                registerRequest.getPhoneNumber()
-        );
+        User user = command.toEntity(passwordEncoder);
+        user.setUuid(UUID.randomUUID().toString());
+        user.setCreateTime(LocalDateTime.now());
+        user.setExpireDate(LocalDateTime.of(2095, 1, 1, 0, 0));
+        user.setPasswordUpdateTime(LocalDateTime.now());
+        user.setLastModifiedTime(LocalDateTime.now());
         userRepository.save(user);
-    }
 
-    public AuthResponse authenticate(AuthRequest authRequest) {
-        String username = authRequest.getUsernameOrPhoneNumber();
-        System.out.println("in authenticate: " + username);
-        if (userRepository.existsByPhoneNumber(username)) {
-            username = userRepository.findUsernameByPhoneNumber(username);
-            System.out.println("in authenticate: phone to username = " + username);
+        if (!userRepository.existsByUsername(command.username)) {
+            throw new ConflictException("用户名创建失败");
         }
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        username,
-                        authRequest.getPassword()
-                )
-        );
-        org.springframework.security.core.userdetails.User principal = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-
-        User user = userRepository.findByUsername(principal.getUsername()).orElseThrow(() -> new AppException("用户不存在", HttpStatus.NOT_FOUND));
-
-        String jwt = jwtService.generateToken(user.getUsername());
-        return new AuthResponse(jwt, user.getUsername(), user.getUuid());
     }
 
-    public UserDTO getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public UserDto loadUserDtoByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("用户不存在: " + username));
+        UserDto dto = new UserDto();
+        dto.setUuid(user.getUuid());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setPhone(user.getPhone());
+        dto.setRemark(user.getRemark());
+        dto.setCreateTime(user.getCreateTime().toString());
+        return dto;
+    }
 
-        User user = userRepository.findByUsername(username)
-        .orElseThrow(() -> new AppException("用户不存在", HttpStatus.NOT_FOUND));
+    public record ErrorResponse(
+            String code,        // 业务错误码
+            String message,     // 用户可读信息
+            Map<String, Object> details // 额外数据
+    ) {
+    }
 
-        return new UserDTO(
-                user.getUsername(),
-                user.getPhoneNumber(),
-                user.getCreatedAt(),
-                user.getUuid()
-                );
+    // 领域命令对象（内部传递）
+    public record UserCreateCommand(
+            String username,
+            String email,
+            String phone,
+            String password // 仅限临时存储
+    ) {
+        public User toEntity(PasswordEncoder encoder) {
+            return User.builder()
+                    .username(username)
+                    .email(email)
+                    .phone(phone)
+                    .password(encoder.encode(password))
+                    .build();
+        }
     }
 }
+
