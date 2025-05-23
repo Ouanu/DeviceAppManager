@@ -33,7 +33,7 @@ public class SecurityConfig {
                 // 授权规则
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/",
+                                "/api/auth/**",
                                 "/public/**",
                                 "/error",
                                 "/favicon.ico"

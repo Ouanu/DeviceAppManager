@@ -20,8 +20,10 @@ public class AuthService {
     private final JwtUtils jwtUtils;
 
     public TokenResponse authenticate(String username, String password) {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        System.out.println("auth = " + authenticationToken);
         Authentication auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
+                authenticationToken
         );
         return new TokenResponse(jwtUtils.generateJwtToken(auth));
     }

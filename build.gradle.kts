@@ -32,6 +32,7 @@ dependencies {
 	implementation("com.auth0:java-jwt:4.4.0")
 	implementation("org.jetbrains:annotations:24.0.0")
 	implementation("com.googlecode.libphonenumber:libphonenumber:8.13.10")
+	implementation("com.google.code.gson:gson:2.8.9")
 	compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")

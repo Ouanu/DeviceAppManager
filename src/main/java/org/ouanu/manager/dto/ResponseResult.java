@@ -9,13 +9,13 @@ public class ResponseResult<T> {
     private final int code;
     private final String message;
     private final T data;
-    private final long timestamp;
+    private final String timestamp;
 
     public ResponseResult(int code, String message, T data) {
         this.code = code;
         this.message = message;
         this.data = data;
-        timestamp = System.currentTimeMillis();
+        timestamp = String.valueOf(System.currentTimeMillis());
     }
 
     public static <T> ResponseEntity<ResponseResult<T>> success() {
