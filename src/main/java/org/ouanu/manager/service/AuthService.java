@@ -1,6 +1,7 @@
 package org.ouanu.manager.service;
 
 import lombok.RequiredArgsConstructor;
+import org.ouanu.manager.model.User;
 import org.ouanu.manager.record.RegisterRequest;
 import org.ouanu.manager.record.TokenResponse;
 import org.ouanu.manager.utils.JwtUtils;
@@ -9,6 +10,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 // 服务层: 处理核心业务逻辑
 @Service
@@ -20,8 +23,8 @@ public class AuthService {
     private final JwtUtils jwtUtils;
 
     public TokenResponse authenticate(String username, String password) {
+        System.out.println("auth = " + " " + password);
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        System.out.println("auth = " + authenticationToken);
         Authentication auth = authManager.authenticate(
                 authenticationToken
         );

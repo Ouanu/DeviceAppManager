@@ -45,7 +45,11 @@ public class ResponseResult<T> {
                 ));
     }
 
-    public static <T> ResponseEntity<ResponseResult<T>> fail(HttpStatus status, String message) {
+    public static <T> ResponseResult<T> error(Integer code, String message) {
+        return new ResponseResult<>(code, message, null);
+    }
+
+    public static <T> ResponseEntity<ResponseResult<T>> error(HttpStatus status, String message) {
         return ResponseEntity
                 .status(status)
                 .body(new ResponseResult<>(

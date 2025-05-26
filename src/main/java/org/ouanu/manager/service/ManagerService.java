@@ -1,30 +1,37 @@
 package org.ouanu.manager.service;
 
 import lombok.RequiredArgsConstructor;
-import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.model.User;
+import org.ouanu.manager.record.ManagerRegisterRequest;
+import org.ouanu.manager.record.RegisterRequest;
 import org.ouanu.manager.repository.UserRepository;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-// 领域服务层
 @Service
 @RequiredArgsConstructor
-public class UserService {
+@Transactional
+public class ManagerService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    public List<User> findAllUsers() {
+        return userRepository.findAll(Sort.by(Sort.Direction.DESC, "createTime"));
+    }
+
+    public void register(ManagerRegisterRequest request) {
+        createUser(request.toCommand());
+    }
+
     @Transactional
-    public void createUser(UserCreateCommand command) {
+    public void createUser(ManagerCreateCommand command) {
         if (userRepository.existsByUsername(command.username)) {
             throw new ConflictException("用户名已存在");
         }
@@ -41,6 +48,7 @@ public class UserService {
         user.setExpireDate(LocalDateTime.of(2095, 1, 1, 0, 0));
         user.setPasswordUpdateTime(LocalDateTime.now());
         user.setLastModifiedTime(LocalDateTime.now());
+        user.setRole("ADMIN");
         userRepository.save(user);
 
         if (!userRepository.existsByUsername(command.username)) {
@@ -48,27 +56,7 @@ public class UserService {
         }
     }
 
-    public UserDto loadUserDtoByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("用户不存在: " + username));
-        UserDto dto = new UserDto();
-        dto.setUuid(user.getUuid());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setPhone(user.getPhone());
-        dto.setRemark(user.getRemark());
-        dto.setCreateTime(user.getCreateTime());
-        return dto;
-    }
-
-    public record ErrorResponse(
-            String code,        // 业务错误码
-            String message,     // 用户可读信息
-            Map<String, Object> details // 额外数据
-    ) {
-    }
-
-    // 领域命令对象（内部传递）
-    public record UserCreateCommand(
+    public record ManagerCreateCommand(
             String username,
             String email,
             String phone,
@@ -84,4 +72,3 @@ public class UserService {
         }
     }
 }
-

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import org.ouanu.manager.service.ManagerService
 import org.ouanu.manager.service.UserService.UserCreateCommand
 
 
@@ -22,5 +23,16 @@ class RegisterRequest(
 ) {
     fun toCommand(): UserCreateCommand {
         return UserCreateCommand(username, email, phone, password)
+    }
+}
+
+class ManagerRegisterRequest(
+    @field:NotBlank @field:Size(min = 3, max = 20) @NotBlank @Size(min = 3, max = 20) val username: String?,
+    @field:Email @Email val email: String?,
+    @field:Pattern(regexp = "^1[3-9]\\d{9}$") @Pattern(regexp = "^1[3-9]\\d{9}$") val phone: String?,
+    @field:Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d).{8,}$") @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d).{8,}$") val password: String?
+) {
+    fun toCommand(): ManagerService.ManagerCreateCommand {
+        return ManagerService.ManagerCreateCommand(username, email, phone, password)
     }
 }

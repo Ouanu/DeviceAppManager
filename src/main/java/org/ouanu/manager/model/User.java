@@ -5,8 +5,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -21,6 +23,8 @@ import java.util.List;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "users")
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Data
 public class User implements UserDetails  {
@@ -51,7 +55,6 @@ public class User implements UserDetails  {
     private String email;
 
     @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'CUSTOMER'")
-    @NotBlank(message = "角色不能为空")
     @Builder.Default
     private String role = "CUSTOMER";
 
