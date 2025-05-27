@@ -48,16 +48,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/manager/register",
                                 "/public/**",
                                 "/error",
                                 "/favicon.ico"
                         )
                         .permitAll()
                         // 管理接口需要特定IP和MANAGER角色
-//                        .requestMatchers("/api/manager/list").access(this::hasIpAndManagerRole) // 限定指定IP和Token
+                        .requestMatchers("/api/manager/list").access(this::hasIpAndManagerRole) // 限定指定IP和Token
                         .requestMatchers("/api/manager/register").access(this::hasIp) // 限定指定IP管理数据库
-                        .requestMatchers("/api/manager/list").access(this::hasIp) // 限定指定IP管理数据库
+//                        .requestMatchers("/api/manager/list").access(this::hasIp) // 限定指定IP管理数据库
                         .anyRequest()
                         .authenticated()
                 )

@@ -48,6 +48,18 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public void loginUpdateLastModifiedTime(String username) {
+        userRepository.updateLoginTime(username, LocalDateTime.now());
+    }
+
+    // Verify username and password.
+    public boolean validateCredentials(String username, String rawPassword) {
+        return userRepository.findByUsername(username)
+                .map(user -> passwordEncoder.matches(rawPassword, user.getPassword()))
+                .orElse(false);
+    }
+
     public UserDto loadUserDtoByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("用户不存在: " + username));
         UserDto dto = new UserDto();

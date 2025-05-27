@@ -23,11 +23,15 @@ public class AuthService {
     private final JwtUtils jwtUtils;
 
     public TokenResponse authenticate(String username, String password) {
-        System.out.println("auth = " + " " + password);
+        if (!userService.validateCredentials(username, password)) {
+//            throw new RuntimeException("用户名或密码错误");
+            return new TokenResponse("");
+        }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         Authentication auth = authManager.authenticate(
                 authenticationToken
         );
+        userService.loginUpdateLastModifiedTime(username);
         return new TokenResponse(jwtUtils.generateJwtToken(auth));
     }
 

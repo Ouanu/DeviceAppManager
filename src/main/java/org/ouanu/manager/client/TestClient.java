@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.ouanu.manager.dto.ResponseResult;
 import org.ouanu.manager.dto.UserDto;
-import org.ouanu.manager.model.User;
 import org.ouanu.manager.record.LoginRequest;
 import org.ouanu.manager.record.ManagerRegisterRequest;
 import org.ouanu.manager.record.RegisterRequest;
@@ -13,8 +12,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,8 +22,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestClient {
@@ -34,7 +32,7 @@ public class TestClient {
     private static RestTemplate restTemplate = new RestTemplate();
     public static void main(String[] args) {
         TestClient client1 = new TestClient();
-        String s = client1.testLogin();
+//        String s = client1.testLogin();
 //        client1.testManagerRegister("Manager", "M3123131312", "manager@example.com", "13800138003");
         client1.testGetUsers();
     }
@@ -47,38 +45,48 @@ public class TestClient {
         try {
             // 1. 首先获取登录token
             LoginRequest loginRequest = new LoginRequest("Manager", "M3123131312");
+//            LoginRequest loginRequest = new LoginRequest("newuser", "A3123131312");
             ResponseResult<TokenResponse> loginResponse = client.login(loginRequest);
 
             if (loginResponse == null || loginResponse.getCode() != 200) {
-                System.out.println("登录失败: " +
+                System.out.println("Login failure: " +
                         (loginResponse != null ? loginResponse.getMessage() : "未知错误"));
                 return;
             }
             String token = loginResponse.getData().token();
-            System.out.println("登录成功, token: " + token);
+            System.out.println("Login succeed, token: " + token);
 
             // 2. 使用获取的token访问用户列表
-            List<UserDto> users = client.getAllUsers("Bearer " + token);
-            System.out.println("成功获取用户列表:");
+            HashMap<String, String> map = new HashMap<>();
+//            map.put("phone", "1380013800");
+            map.put("email", "@");
+            List<UserDto> users = client.getAllUsers("Bearer " + token, map);
+            System.out.println("Get user's list:");
             users.forEach(user -> System.out.printf(
-                    "ID: %d, Username: %s, Role: %s, Phone: %s\n",
-                    user.getId(), user.getUsername(), user.getRole(), user.getPhone()));
+                    "ID: %d, Username: %s, Role: %s, Phone: %s\n, Email: %s\n, CreateTime: %s\n, LastModifiedTime: %s\n",
+                    user.getId(), user.getUsername(), user.getRole(), user.getPhone(), user.getEmail(), user.getCreateTime().toString(), user.getLastModifiedTime().toString()));
 
         } catch (Exception e) {
-            System.err.println("发生异常: " + e.getMessage());
+            System.err.println("Wrong: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    public List<UserDto> getAllUsers(String authToken) {
+    public List<UserDto> getAllUsers(String authToken, Map<String, String> params) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", authToken);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
+            // 构建带参数的URI
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(BASE_MANAGER_URL + "/list");
+            if (params != null) {
+                params.forEach(builder::queryParam);
+            }
+
             // 直接解析为List<UserDto>
             ResponseEntity<List<UserDto>> response = restTemplate.exchange(
-                    BASE_MANAGER_URL + "/list",
+                    builder.toUriString(),
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     new ParameterizedTypeReference<List<UserDto>>() {}
@@ -87,13 +95,16 @@ public class TestClient {
             return response.getBody();
         } catch (HttpClientErrorException e) {
 //            log.error("HTTP客户端错误: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("获取用户列表失败: " + e.getStatusText());
+            System.out.println("Failed to get user list: " + e.getStatusText());
+            return new ArrayList<>();
         } catch (HttpServerErrorException e) {
 //            log.error("HTTP服务端错误: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("服务端错误: " + e.getStatusText());
+            System.out.println("Server error: " + e.getStatusText());
+            return new ArrayList<>();
         } catch (Exception e) {
 //            log.error("请求异常", e);
-            throw new RuntimeException("请求异常: " + e.getMessage());
+            System.out.println("Request exception: " + e.getMessage());
+            return new ArrayList<>();
         }
     }
 
