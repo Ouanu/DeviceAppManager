@@ -1,8 +1,8 @@
 package org.ouanu.manager.service;
 
 import lombok.RequiredArgsConstructor;
-import org.ouanu.manager.model.User;
-import org.ouanu.manager.record.RegisterRequest;
+import org.ouanu.manager.record.DeleteUserOrManagerRequest;
+import org.ouanu.manager.record.RegisterUserRequest;
 import org.ouanu.manager.record.TokenResponse;
 import org.ouanu.manager.utils.JwtUtils;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,8 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 // 服务层: 处理核心业务逻辑
 @Service
@@ -35,7 +33,9 @@ public class AuthService {
         return new TokenResponse(jwtUtils.generateJwtToken(auth));
     }
 
-    public void register(RegisterRequest request) {
+    public void register(RegisterUserRequest request) {
         userService.createUser(request.toCommand());
     }
+
+
 }

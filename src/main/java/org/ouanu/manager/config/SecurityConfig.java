@@ -54,7 +54,7 @@ public class SecurityConfig {
                         )
                         .permitAll()
                         // 管理接口需要特定IP和MANAGER角色
-                        .requestMatchers("/api/manager/list").access(this::hasIpAndManagerRole) // 限定指定IP和Token
+                        .requestMatchers("/api/manager/list", "/api/manager/delete").access(this::hasIpAndManagerRole) // 限定指定IP和Token
                         .requestMatchers("/api/manager/register").access(this::hasIp) // 限定指定IP管理数据库
 //                        .requestMatchers("/api/manager/list").access(this::hasIp) // 限定指定IP管理数据库
                         .anyRequest()
@@ -84,10 +84,6 @@ public class SecurityConfig {
         // 检查IP是否在白名单中
         boolean ipAllowed = allowedIps.contains(clientIp);
         // 检查用户是否有MANAGER角色
-        Collection<? extends GrantedAuthority> authorities = authentication.get().getAuthorities();
-        for (GrantedAuthority authority : authorities) {
-            System.out.println("Authority = " + authority.getAuthority());
-        }
         boolean hasRequiredRole = authentication.get().getAuthorities().stream()
                 .anyMatch(grantedAuthority ->
                         grantedAuthority.getAuthority().equals("ROLE_MANAGER") ||

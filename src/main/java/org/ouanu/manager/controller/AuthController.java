@@ -3,16 +3,14 @@ package org.ouanu.manager.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.dto.ResponseResult;
-import org.ouanu.manager.model.User;
 import org.ouanu.manager.record.LoginRequest;
-import org.ouanu.manager.record.RegisterRequest;
+import org.ouanu.manager.record.RegisterUserRequest;
 import org.ouanu.manager.record.TokenResponse;
 import org.ouanu.manager.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -38,10 +36,12 @@ public class AuthController {
     @PostMapping("/register")
 //    @Idempotent(key = "#request.email", expire = 30, timeUnit = TimeUnit.MINUTES)
     public ResponseEntity<ResponseResult<Void>> register(
-            @Valid @RequestBody RegisterRequest request
+            @Valid @RequestBody RegisterUserRequest request
     ) {
         authService.register(request);
         return ResponseResult.created();
     }
+
+
 
 }

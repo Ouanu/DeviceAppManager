@@ -4,18 +4,17 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.dto.ResponseResult;
 import org.ouanu.manager.dto.UserDto;
-import org.ouanu.manager.model.User;
 import org.ouanu.manager.query.UserQuery;
-import org.ouanu.manager.record.ManagerRegisterRequest;
+import org.ouanu.manager.record.DeleteUserOrManagerRequest;
+import org.ouanu.manager.record.RegisterManagerRequest;
 import org.ouanu.manager.service.ManagerService;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/manager")
@@ -23,6 +22,7 @@ import java.util.stream.Collectors;
 public class ManagerController {
     private final ManagerService service;
 
+    // 管理员获取所有的用户
     @GetMapping("/list")
     public ResponseEntity<List<UserDto>> listUsers(
             @RequestParam Map<String, String> params
@@ -47,21 +47,30 @@ public class ManagerController {
         return ResponseEntity.ok(service.findByConditions(query.build()));
     }
 
+    // 注册新的用户
     @PostMapping("/register")
     public ResponseEntity<ResponseResult<Void>> register(
-            @Valid @RequestBody ManagerRegisterRequest request
+            @Valid @RequestBody RegisterManagerRequest request
     ) {
         service.register(request);
         return ResponseResult.created();
     }
 
+    // 软删除用户
     @PostMapping("/delete")
-    public ResponseEntity<ResponseResult<Void>> delete(
-            @Valid @RequestBody ManagerRegisterRequest request
-    ) {
-        service.register(request);
-        return ResponseResult.created();
+    public ResponseEntity<ResponseResult<Boolean>> delete(@Valid @RequestBody DeleteUserOrManagerRequest request) {
+        boolean success = service.delete(request);
+        return success ?
+                ResponseResult.success() :
+                ResponseResult.error(HttpStatus.NOT_FOUND, "用户不存在");
     }
 
-
+    // 硬删除用户
+    @PostMapping("/hard_delete")
+    public ResponseEntity<ResponseResult<Boolean>> hardDelete(@Valid @RequestBody DeleteUserOrManagerRequest request) {
+        boolean success = service.hardDelete(request);
+        return success ?
+                ResponseResult.success() :
+                ResponseResult.error(HttpStatus.NOT_FOUND, "用户不存在");
+    }
 }

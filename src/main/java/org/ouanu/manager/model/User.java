@@ -1,6 +1,7 @@
 package org.ouanu.manager.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -9,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -22,6 +24,8 @@ import java.util.List;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@SQLRestriction("is_locked = false")
+@SQLDelete(sql = "UPDATE users SET is_locked = true WHERE id = ?")
 @Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -50,7 +54,7 @@ public class User implements UserDetails {
     @Pattern(regexp = "^\\+?[0-9. ()-]{10,25}$", message = "请输入有效的手机号")
     private String phone;
 
-    @Column(nullable = true)
+    @Column
     @Email(message = "邮箱格式不正确")
     private String email;
 
@@ -65,16 +69,14 @@ public class User implements UserDetails {
     @Column(name = "expire_date")
     private LocalDateTime expireDate; // 可添加过期时间段
 
-    @Column(name = "is_locked")
-    @Builder.Default
-    private boolean locked = false; // 账户是否未锁定
+    @Column(nullable = false, name = "is_locked", columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean locked; // 账户是否未锁定
 
     @Column(name = "pwd_update_time")
     private LocalDateTime passwordUpdateTime; // 可添加密码强制修改时间
 
-    @Column(name = "active")
-    @Builder.Default
-    private boolean active = true; // 账户是否启用
+    @Column(nullable = false, name = "active", columnDefinition = "BOOLEAN DEFAULT true")
+    private boolean active; // 账户是否启用
 
     // 创建时间（由系统自动设置）
     @CreatedDate

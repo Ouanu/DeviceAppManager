@@ -7,13 +7,15 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Filter;
+import org.hibernate.Session;
 import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.model.User;
 import org.ouanu.manager.query.UserQuery;
-import org.ouanu.manager.record.ManagerRegisterRequest;
+import org.ouanu.manager.record.DeleteUserOrManagerRequest;
+import org.ouanu.manager.record.RegisterManagerRequest;
 import org.ouanu.manager.repository.UserRepository;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -90,8 +91,18 @@ public class ManagerService {
         return list;
     }
 
-    public void register(ManagerRegisterRequest request) {
+    public void register(RegisterManagerRequest request) {
         createUser(request.toCommand());
+    }
+
+    @Transactional
+    public boolean delete(DeleteUserOrManagerRequest request) {
+        return userRepository.deleteByUuid(request.uuid()) > 0;
+    }
+
+    @Transactional
+    public boolean hardDelete(DeleteUserOrManagerRequest request) {
+        return userRepository.hardDeleteByUuid(request.uuid()) > 0;
     }
 
     @Transactional

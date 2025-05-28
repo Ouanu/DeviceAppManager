@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.ouanu.manager.dto.ResponseResult;
 import org.ouanu.manager.dto.UserDto;
-import org.ouanu.manager.record.LoginRequest;
-import org.ouanu.manager.record.ManagerRegisterRequest;
-import org.ouanu.manager.record.RegisterRequest;
-import org.ouanu.manager.record.TokenResponse;
+import org.ouanu.manager.record.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
@@ -30,28 +27,87 @@ public class TestClient {
     private static final String BASE_MANAGER_URL = "http://127.0.0.1:8081/api/manager"; // 替换为你的服务器地址
     private static TestClient client = new TestClient();
     private static RestTemplate restTemplate = new RestTemplate();
+    private static List<UserDto> dtos = new ArrayList<>();
     public static void main(String[] args) {
         TestClient client1 = new TestClient();
-//        String s = client1.testLogin();
-//        client1.testManagerRegister("Manager", "M3123131312", "manager@example.com", "13800138003");
-        client1.testGetUsers();
+        String s = client1.testLogin("newuser2", "B3123131312");
+//        client1.testManagerRegister("Manager", "M3123131310", "manager@example.com", "13800138000");
+//        client1.testRegister("newuser1", "B3123131311", "newuser1@qq.com", "13800138001");
+//        client1.testRegister("newuser2", "B3123131312", "newuser2@qq.com", "13800138002");
+//        client1.testRegister("newuser3", "B3123131313", "newuser3@qq.com", "13800138003");
+//        client1.testRegister("newuser4", "B3123131314", "newuser4@qq.com", "13800138004");
+        String token = client1.testGetUsers();
+//        if (!dtos.isEmpty()) {
+//            UserDto dto = dtos.get(1);
+//            try {
+//                System.out.println("delete user = " + dto.getUsername() + " uuid = " + dto.getUuid());
+//                client1.testDeleteUser(token, dto.getUuid(), false);
+//            } catch (Exception e) {
+//                System.out.println(e);
+//            }
+//        }
+//        client1.testGetUsers();
+
     }
 
 //    private String testListUsers(String token) {
 //
 //    }
 
-    private void testGetUsers() {
+    private void testDeleteUser(String token, String uuid, boolean isHardDelete) throws IOException {
+//        LoginRequest loginRequest = new LoginRequest("Manager", "M3123131310");
+//            LoginRequest loginRequest = new LoginRequest("newuser", "A3123131312");
+//        ResponseResult<TokenResponse> loginResponse = client.login(loginRequest);
+        boolean deleteResponse = client.delete(token, uuid, isHardDelete);
+        System.out.println("Delete result = " + deleteResponse);
+    }
+
+    private boolean delete(String authToken, String uuid, boolean isHardDelete) throws IOException {
+        URL url;
+        if (isHardDelete) url = new URL(BASE_MANAGER_URL + "/hard_delete");
+        else url = new URL(BASE_MANAGER_URL + "/delete");
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        DeleteUserOrManagerRequest request = new DeleteUserOrManagerRequest(uuid);
+        try {
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + authToken);
+            connection.setDoOutput(true);
+
+            String requestBody = gson.toJson(request);
+            try (OutputStream os = connection.getOutputStream()) {
+                os.write(requestBody.getBytes(StandardCharsets.UTF_8));
+            }
+
+            int responseCode = connection.getResponseCode();
+            String response = readResponse(connection, responseCode);
+
+            // 使用正确的TypeToken
+            ResponseResult<Boolean> result = gson.fromJson(response,
+                    new TypeToken<ResponseResult<Boolean>>(){}.getType());
+            return result.getCode() == 200;
+        } catch (Exception e) {
+            System.err.println("Parsing response failed: " + e.getMessage());
+//            throw new IOException("Failed to process the login request: ", e);
+            return false;
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private String testGetUsers() {
         try {
             // 1. 首先获取登录token
-            LoginRequest loginRequest = new LoginRequest("Manager", "M3123131312");
+            LoginRequest loginRequest = new LoginRequest("Manager", "M3123131310");
 //            LoginRequest loginRequest = new LoginRequest("newuser", "A3123131312");
             ResponseResult<TokenResponse> loginResponse = client.login(loginRequest);
 
             if (loginResponse == null || loginResponse.getCode() != 200) {
                 System.out.println("Login failure: " +
                         (loginResponse != null ? loginResponse.getMessage() : "未知错误"));
-                return;
+                return "";
             }
             String token = loginResponse.getData().token();
             System.out.println("Login succeed, token: " + token);
@@ -62,13 +118,17 @@ public class TestClient {
             map.put("email", "@");
             List<UserDto> users = client.getAllUsers("Bearer " + token, map);
             System.out.println("Get user's list:");
-            users.forEach(user -> System.out.printf(
-                    "ID: %d, Username: %s, Role: %s, Phone: %s\n, Email: %s\n, CreateTime: %s\n, LastModifiedTime: %s\n",
-                    user.getId(), user.getUsername(), user.getRole(), user.getPhone(), user.getEmail(), user.getCreateTime().toString(), user.getLastModifiedTime().toString()));
-
+            users.forEach(user -> {
+                System.out.printf(
+                        "ID: %d, Username: %s, Role: %s, Phone: %s\n, Email: %s\n, CreateTime: %s\n, LastModifiedTime: %s\n",
+                        user.getId(), user.getUsername(), user.getRole(), user.getPhone(), user.getEmail(), user.getCreateTime().toString(), user.getLastModifiedTime().toString());
+                dtos.add(user);
+            });
+            return loginResponse.getData().token();
         } catch (Exception e) {
             System.err.println("Wrong: " + e.getMessage());
             e.printStackTrace();
+            return "";
         }
     }
 
@@ -109,9 +169,9 @@ public class TestClient {
     }
 
 
-    private String testLogin() {
+    private String testLogin(String username, String password) {
         try {
-            LoginRequest loginRequest = new LoginRequest("newuser", "A3123131312");
+            LoginRequest loginRequest = new LoginRequest(username, password);
             ResponseResult<TokenResponse> loginResponse = client.login(loginRequest);
 
             if (loginResponse != null && loginResponse.getCode() == 200) {
@@ -133,8 +193,8 @@ public class TestClient {
         try {
 //            RegisterRequest registerRequest = new RegisterRequest("newuser", "newuser@qq.com", "13800138000", "A3123131312");
 //            RegisterRequest registerRequest = new RegisterRequest("newuser2", "newuser2@qq.com", "13800138002", "B3123131312");
-            RegisterRequest registerRequest = new RegisterRequest(username, email, phone, password);
-            ResponseResult<String> registerResponse = client.register(registerRequest);
+            RegisterUserRequest registerUserRequest = new RegisterUserRequest(username, email, phone, password);
+            ResponseResult<String> registerResponse = client.register(registerUserRequest);
 
             if (registerResponse.getCode() == 201) {
                 System.out.println("Register succeed");
@@ -148,7 +208,7 @@ public class TestClient {
 
     private void testManagerRegister(String username, String password, String email, String phone) {
         try {
-            ManagerRegisterRequest registerRequest = new ManagerRegisterRequest(username, email, phone, password);
+            RegisterManagerRequest registerRequest = new RegisterManagerRequest(username, email, phone, password);
             ResponseResult<String> registerResponse = client.managerRegister(registerRequest);
 
             if (registerResponse.getCode() == 201) {
@@ -203,7 +263,7 @@ public class TestClient {
         }
     }
 
-    public ResponseResult<String> register(RegisterRequest request) throws IOException {
+    public ResponseResult<String> register(RegisterUserRequest request) throws IOException {
         URL url = new URL(BASE_URL + "/register");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -233,7 +293,7 @@ public class TestClient {
         }
     }
 
-    public ResponseResult<String> managerRegister(ManagerRegisterRequest request) throws IOException {
+    public ResponseResult<String> managerRegister(RegisterManagerRequest request) throws IOException {
         URL url = new URL(BASE_MANAGER_URL + "/register");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
