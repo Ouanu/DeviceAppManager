@@ -75,7 +75,7 @@ public class User implements UserDetails {
     @Column(name = "pwd_update_time")
     private LocalDateTime passwordUpdateTime; // 可添加密码强制修改时间
 
-    @Column(nullable = false, name = "active", columnDefinition = "BOOLEAN DEFAULT true")
+    @Column(nullable = false, name = "is_active", columnDefinition = "BOOLEAN DEFAULT true")
     private boolean active; // 账户是否启用
 
     // 创建时间（由系统自动设置）

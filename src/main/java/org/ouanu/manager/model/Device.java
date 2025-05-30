@@ -40,7 +40,7 @@ public class Device {
     @Builder.Default
     private boolean locked = false; // 设备是否锁定（对用户不可见）
 
-    @Column(name = "active")
+    @Column(name = "is_active")
     @Builder.Default
     private boolean active = true; // 账户是否启用（用户可操作，用来禁用或启用设备）
 

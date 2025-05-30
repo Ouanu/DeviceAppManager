@@ -35,7 +35,7 @@ public class TestClient {
     private static List<UserDto> dtos = new ArrayList<>();
     public static void main(String[] args) {
         TestClient client1 = new TestClient();
-        String s = client1.testLogin("newuser4", "B3123131314");
+        String s = client1.testLogin("newuser1", "B3123131311");
         UserResponse user = client1.getUser(s);
         System.out.println("user = " + user);
         if (user != null) {
