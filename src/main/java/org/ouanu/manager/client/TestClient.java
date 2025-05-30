@@ -2,9 +2,14 @@ package org.ouanu.manager.client;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.ouanu.manager.dto.ResponseResult;
+import org.ouanu.manager.common.ResponseResult;
 import org.ouanu.manager.dto.UserDto;
-import org.ouanu.manager.record.*;
+import org.ouanu.manager.response.UserResponse;
+import org.ouanu.manager.request.DeleteUserOrManagerRequest;
+import org.ouanu.manager.request.LoginRequest;
+import org.ouanu.manager.request.RegisterManagerRequest;
+import org.ouanu.manager.request.RegisterUserRequest;
+import org.ouanu.manager.response.TokenResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
@@ -30,7 +35,14 @@ public class TestClient {
     private static List<UserDto> dtos = new ArrayList<>();
     public static void main(String[] args) {
         TestClient client1 = new TestClient();
-        String s = client1.testLogin("newuser2", "B3123131312");
+        String s = client1.testLogin("newuser4", "B3123131314");
+        UserResponse user = client1.getUser(s);
+        System.out.println("user = " + user);
+        if (user != null) {
+            System.out.println("username = " + user.getUsername() + " uuid = " + user.getUuid() + " email = " + user.getEmail());
+        } else {
+            System.out.println("User wasn't exists");
+        }
 //        client1.testManagerRegister("Manager", "M3123131310", "manager@example.com", "13800138000");
 //        client1.testRegister("newuser1", "B3123131311", "newuser1@qq.com", "13800138001");
 //        client1.testRegister("newuser2", "B3123131312", "newuser2@qq.com", "13800138002");
@@ -53,6 +65,42 @@ public class TestClient {
 //    private String testListUsers(String token) {
 //
 //    }
+
+    public UserResponse getUser(String authToken) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + authToken);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+            // 构建带参数的URI
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(BASE_URL + "/me");
+
+            // 直接解析为List<UserDto>
+            ResponseEntity<ResponseResult<UserResponse>> response = restTemplate.exchange(
+                    builder.toUriString(),
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    new ParameterizedTypeReference<ResponseResult<UserResponse>>() {}
+            );
+            if (response.getBody() != null) {
+                return response.getBody().getData();
+            } else {
+                return null;
+            }
+        } catch (HttpClientErrorException e) {
+//            log.error("HTTP客户端错误: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            System.out.println("Failed to get user: " + e.getStatusText());
+            return null;
+        } catch (HttpServerErrorException e) {
+//            log.error("HTTP服务端错误: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            System.out.println("Server error: " + e.getStatusText());
+            return null;
+        } catch (Exception e) {
+//            log.error("请求异常", e);
+            System.out.println("Request exception: " + e.getMessage());
+            return null;
+        }
+    }
 
     private void testDeleteUser(String token, String uuid, boolean isHardDelete) throws IOException {
 //        LoginRequest loginRequest = new LoginRequest("Manager", "M3123131310");
@@ -193,7 +241,7 @@ public class TestClient {
         try {
 //            RegisterRequest registerRequest = new RegisterRequest("newuser", "newuser@qq.com", "13800138000", "A3123131312");
 //            RegisterRequest registerRequest = new RegisterRequest("newuser2", "newuser2@qq.com", "13800138002", "B3123131312");
-            RegisterUserRequest registerUserRequest = new RegisterUserRequest(username, email, phone, password);
+            RegisterUserRequest registerUserRequest = new RegisterUserRequest(username, email, phone, password, "Test");
             ResponseResult<String> registerResponse = client.register(registerUserRequest);
 
             if (registerResponse.getCode() == 201) {
@@ -208,7 +256,7 @@ public class TestClient {
 
     private void testManagerRegister(String username, String password, String email, String phone) {
         try {
-            RegisterManagerRequest registerRequest = new RegisterManagerRequest(username, email, phone, password);
+            RegisterManagerRequest registerRequest = new RegisterManagerRequest(username, email, phone, password, "manager");
             ResponseResult<String> registerResponse = client.managerRegister(registerRequest);
 
             if (registerResponse.getCode() == 201) {

@@ -7,15 +7,14 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.Filter;
-import org.hibernate.Session;
+import org.ouanu.manager.command.ManagerCreateCommand;
 import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.model.User;
 import org.ouanu.manager.query.UserQuery;
-import org.ouanu.manager.record.DeleteUserOrManagerRequest;
-import org.ouanu.manager.record.RegisterManagerRequest;
 import org.ouanu.manager.repository.UserRepository;
+import org.ouanu.manager.request.DeleteUserOrManagerRequest;
+import org.ouanu.manager.request.RegisterManagerRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,10 +32,6 @@ public class ManagerService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EntityManager entityManager;
-
-//    public List<User> findAllUsers() {
-//        return userRepository.findAll(Sort.by(Sort.Direction.DESC, "createTime"));
-//    }
 
     public List<UserDto> findByConditions(UserQuery query) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -107,13 +102,13 @@ public class ManagerService {
 
     @Transactional
     public void createUser(ManagerCreateCommand command) {
-        if (userRepository.existsByUsername(command.username)) {
+        if (userRepository.existsByUsername(command.username())) {
             throw new ConflictException("用户名已存在");
         }
-        if (userRepository.existsByEmail(command.email)) {
+        if (userRepository.existsByEmail(command.email())) {
             throw new ConflictException("Email已存在");
         }
-        if (userRepository.existsByPhone(command.phone)) {
+        if (userRepository.existsByPhone(command.phone())) {
             throw new ConflictException("手机号已存在");
         }
 
@@ -124,26 +119,11 @@ public class ManagerService {
         user.setPasswordUpdateTime(LocalDateTime.now());
         user.setLastModifiedTime(LocalDateTime.now());
         user.setRole("ADMIN");
+        user.setRemark(command.remark());
         userRepository.save(user);
 
-        if (!userRepository.existsByUsername(command.username)) {
+        if (!userRepository.existsByUsername(command.username())) {
             throw new ConflictException("用户名创建失败");
-        }
-    }
-
-    public record ManagerCreateCommand(
-            String username,
-            String email,
-            String phone,
-            String password // 仅限临时存储
-    ) {
-        public User toEntity(PasswordEncoder encoder) {
-            return User.builder()
-                    .username(username)
-                    .email(email)
-                    .phone(phone)
-                    .password(encoder.encode(password))
-                    .build();
         }
     }
 }

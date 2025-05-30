@@ -2,11 +2,11 @@ package org.ouanu.manager.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.ouanu.manager.dto.ResponseResult;
+import org.ouanu.manager.common.ResponseResult;
 import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.query.UserQuery;
-import org.ouanu.manager.record.DeleteUserOrManagerRequest;
-import org.ouanu.manager.record.RegisterManagerRequest;
+import org.ouanu.manager.request.DeleteUserOrManagerRequest;
+import org.ouanu.manager.request.RegisterManagerRequest;
 import org.ouanu.manager.service.ManagerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

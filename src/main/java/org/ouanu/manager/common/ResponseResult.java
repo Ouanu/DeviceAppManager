@@ -1,4 +1,4 @@
-package org.ouanu.manager.dto;
+package org.ouanu.manager.common;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

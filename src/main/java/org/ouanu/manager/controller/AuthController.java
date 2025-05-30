@@ -2,10 +2,11 @@ package org.ouanu.manager.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.ouanu.manager.dto.ResponseResult;
-import org.ouanu.manager.record.LoginRequest;
-import org.ouanu.manager.record.RegisterUserRequest;
-import org.ouanu.manager.record.TokenResponse;
+import org.ouanu.manager.common.ResponseResult;
+import org.ouanu.manager.response.UserResponse;
+import org.ouanu.manager.request.LoginRequest;
+import org.ouanu.manager.request.RegisterUserRequest;
+import org.ouanu.manager.response.TokenResponse;
 import org.ouanu.manager.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,16 @@ public class AuthController {
         return ResponseResult.created();
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ResponseResult<UserResponse>> me() {
 
+        UserResponse me = authService.me();
+        if (me == null) {
+            return ResponseResult.error(HttpStatus.NOT_FOUND, "User wasn't exists---------");
+        } else {
+            System.out.println("------------------" + me);
+            return ResponseResult.success(me);
+        }
+    }
 
 }

@@ -11,8 +11,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
-//@SQLRestriction("is_locked = false") // 替代@Where
-//@SQLDelete(sql = "UPDATE users SET is_locked = true WHERE id = ?") // 软删除SQL
+@SQLRestriction("is_locked = false") // 替代@Where
+@SQLDelete(sql = "UPDATE users SET is_locked = true WHERE id = ?") // 软删除SQL
 @Data
 @Builder
 @Table(name = "devices")
@@ -36,12 +36,12 @@ public class Device {
     @Size(max = 20, message = "组名长度需在0~20个字符之间, 当为0时则为Default Group")
     private String deviceGroup;
 
-//    @Column(name = "is_locked")
-//    @Builder.Default
-//    private boolean locked = false; // 设备是否锁定（对用户不可见）
-//
-//    @Column(name = "active")
-//    @Builder.Default
-//    private boolean active = true; // 账户是否启用（用户可操作，用来禁用或启用设备）
+    @Column(name = "is_locked")
+    @Builder.Default
+    private boolean locked = false; // 设备是否锁定（对用户不可见）
+
+    @Column(name = "active")
+    @Builder.Default
+    private boolean active = true; // 账户是否启用（用户可操作，用来禁用或启用设备）
 
 }
