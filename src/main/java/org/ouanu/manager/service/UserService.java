@@ -42,7 +42,7 @@ public class UserService {
         userRepository.save(user);
 
         if (!userRepository.existsByUsername(command.username())) {
-            throw new ConflictException("用户名创建失败");
+            throw new ConflictException("用户创建失败");
         }
     }
 

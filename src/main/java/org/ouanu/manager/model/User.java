@@ -21,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -49,12 +50,12 @@ public class User implements UserDetails {
     @NotBlank(message = "密码不能为空")
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     @NotBlank(message = "手机号不能为空")
     @Pattern(regexp = "^\\+?[0-9. ()-]{10,25}$", message = "请输入有效的手机号")
     private String phone;
 
-    @Column
+    @Column(unique = true)
     @Email(message = "邮箱格式不正确")
     private String email;
 
@@ -66,13 +67,13 @@ public class User implements UserDetails {
     @Size(max = 200, message = "备注信息不能超过200个字符")
     private String remark;
 
-    @Column(name = "expire_date")
+    @Column(nullable = false, name = "expire_date")
     private LocalDateTime expireDate; // 可添加过期时间段
 
     @Column(nullable = false, name = "is_locked", columnDefinition = "BOOLEAN DEFAULT false")
     private boolean locked; // 账户是否未锁定
 
-    @Column(name = "pwd_update_time")
+    @Column(nullable = false, name = "pwd_update_time")
     private LocalDateTime passwordUpdateTime; // 可添加密码强制修改时间
 
     @Column(nullable = false, name = "is_active", columnDefinition = "BOOLEAN DEFAULT true")
@@ -80,12 +81,16 @@ public class User implements UserDetails {
 
     // 创建时间（由系统自动设置）
     @CreatedDate
-    @Column(updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createTime;
 
     // 最后修改时间（包含活跃时间更新）
     @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime lastModifiedTime;
+
+    @OneToMany(mappedBy = "owner")
+    private Set<Device> ownedDevices;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -114,4 +119,7 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return active;
     }
+
 }
+
+

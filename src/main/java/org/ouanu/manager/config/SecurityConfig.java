@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
+                                "/api/device/**",
                                 "/public/**",
                                 "/error",
                                 "/favicon.ico"

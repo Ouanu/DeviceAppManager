@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.command.ManagerCreateCommand;
 import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.exception.ConflictException;
+import org.ouanu.manager.iface.PermissionCheck;
 import org.ouanu.manager.model.User;
 import org.ouanu.manager.query.UserQuery;
 import org.ouanu.manager.repository.UserRepository;
@@ -22,6 +23,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +34,7 @@ public class ManagerService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EntityManager entityManager;
+
 
     public List<UserDto> findByConditions(UserQuery query) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();

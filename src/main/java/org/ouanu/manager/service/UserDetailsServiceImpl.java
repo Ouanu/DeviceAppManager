@@ -28,6 +28,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 user.getPassword(),
                 new HashSet<>(Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole())))
         );
+//        return user;
     }
 
 

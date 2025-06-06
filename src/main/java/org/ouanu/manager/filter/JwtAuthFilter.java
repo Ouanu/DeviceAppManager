@@ -32,7 +32,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NotNull HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
             // 跳过不需要认证的路径
-            System.out.println("Verify token ------- " + request);
             String token = parseToken(request);
             if (token != null) {
                 String username = jwtUtils.getUsernameFromToken(token);

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.response.UserResponse;
 import org.ouanu.manager.request.RegisterUserRequest;
-import org.ouanu.manager.response.TokenResponse;
+import org.ouanu.manager.response.UserTokenResponse;
 import org.ouanu.manager.utils.JwtUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,17 +23,17 @@ public class AuthService {
     private final AuthenticationManager authManager;
     private final JwtUtils jwtUtils;
 
-    public TokenResponse authenticate(String username, String password) {
+    public UserTokenResponse authenticate(String username, String password) {
         if (!userService.validateCredentials(username, password)) {
 //            throw new RuntimeException("用户名或密码错误");
-            return new TokenResponse("");
+            return new UserTokenResponse("");
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         Authentication auth = authManager.authenticate(
                 authenticationToken
         );
         userService.loginUpdateLastModifiedTime(username);
-        return new TokenResponse(jwtUtils.generateJwtToken(auth));
+        return new UserTokenResponse(jwtUtils.generateJwtToken(auth));
     }
 
     public void register(RegisterUserRequest request) {

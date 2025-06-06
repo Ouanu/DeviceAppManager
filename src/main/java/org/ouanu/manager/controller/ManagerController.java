@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.common.ResponseResult;
 import org.ouanu.manager.dto.UserDto;
+import org.ouanu.manager.iface.PermissionCheck;
 import org.ouanu.manager.query.UserQuery;
 import org.ouanu.manager.request.DeleteUserOrManagerRequest;
 import org.ouanu.manager.request.RegisterManagerRequest;
@@ -23,6 +24,7 @@ public class ManagerController {
     private final ManagerService service;
 
     // 管理员获取所有的用户
+    @PermissionCheck(roles = {"ADMIN"})
     @GetMapping("/list")
     public ResponseEntity<List<UserDto>> listUsers(
             @RequestParam Map<String, String> params
@@ -57,6 +59,7 @@ public class ManagerController {
     }
 
     // 软删除用户
+    @PermissionCheck(roles = {"ADMIN"})
     @PostMapping("/delete")
     public ResponseEntity<ResponseResult<Boolean>> delete(@Valid @RequestBody DeleteUserOrManagerRequest request) {
         boolean success = service.delete(request);
@@ -66,6 +69,7 @@ public class ManagerController {
     }
 
     // 硬删除用户
+    @PermissionCheck(roles = {"ADMIN"})
     @PostMapping("/hard_delete")
     public ResponseEntity<ResponseResult<Boolean>> hardDelete(@Valid @RequestBody DeleteUserOrManagerRequest request) {
         boolean success = service.hardDelete(request);
