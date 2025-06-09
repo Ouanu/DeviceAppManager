@@ -13,8 +13,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @SQLRestriction("is_locked = false") // 替代@Where
@@ -65,9 +63,12 @@ public class Device {
     @Size(max = 200, message = "备注信息不能超过200个字符")
     private String remark;
 
-    @Column(nullable = false)
-    @NotBlank(message = "所属用户UUID不能为空")
+    @Column(nullable = true)
     private String userUuid;
+
+    @Column(nullable = false)
+    @NotBlank(message = "签名不能为空")
+    private String signature;
 
     @ManyToOne(fetch = FetchType.LAZY)  // 多设备属于一个用户
     @JoinColumn(name = "user_id")       // 实际存储的是 users.id

@@ -17,6 +17,8 @@ public class DeviceDto {
     private String uuid;
     private String deviceName;
     private String deviceGroup;
+    private String userUuid;
+    private String signature;
     private boolean locked; // 设备是否锁定（对用户不可见）
     private boolean active; // 账户是否启用（用户可操作，用来禁用或启用设备）
     private LocalDateTime createTime;
@@ -31,6 +33,8 @@ public class DeviceDto {
                 .deviceGroup(device.getDeviceGroup())
                 .locked(device.isLocked())
                 .active(device.isActive())
+                .userUuid(device.getUserUuid())
+                .signature(device.getSignature())
                 .createTime(device.getCreateTime())
                 .lastModifiedTime(device.getLastModifiedTime())
                 .remark(device.getRemark())

@@ -7,6 +7,7 @@ public record DeviceCreateCommand(
         String deviceName,
         String deviceGroup,
         String userUuid,
+        String signature,
         String remark
 ) {
 
@@ -34,12 +35,18 @@ public record DeviceCreateCommand(
         return remark;
     }
 
+    @Override
+    public String signature() {
+        return signature;
+    }
+
     public Device toEntity() {
         return Device.builder()
                 .uuid(uuid)
                 .deviceName(deviceName)
                 .deviceGroup(deviceGroup)
                 .userUuid(userUuid)
+                .signature(signature)
                 .remark(remark)
                 .build();
     }

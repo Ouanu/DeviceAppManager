@@ -45,7 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
-                                "/api/device/**",
+                                "/api/device/register",
+                                "/api/device/login",
                                 "/public/**",
                                 "/error",
                                 "/favicon.ico"
@@ -115,6 +116,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config
     ) throws Exception {
+//        System.out.println("Loading AuthenticationManager......");
         return config.getAuthenticationManager();
     }
 

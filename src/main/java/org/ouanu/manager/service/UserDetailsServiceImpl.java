@@ -22,12 +22,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("用户不存在: " + username));
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                new HashSet<>(Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole())))
-        );
+        try {
+            User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("用户不存在: " + username));
+            return new org.springframework.security.core.userdetails.User(
+                    user.getUsername(),
+                    user.getPassword(),
+                    new HashSet<>(Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole())))
+            );
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+
 //        return user;
     }
 

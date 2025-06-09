@@ -40,6 +40,7 @@ public class TestClient {
                 "Test Device",
                 "default",
                 "57522640-ffbb-4232-86e3-966f655b371b",
+                "57522640-ffbb-4232-86e3-966f655b371b",
                 "Only for test"
         );
 
@@ -284,9 +285,9 @@ public class TestClient {
     }
 
 
-    private void testDeviceRegister(String uuid, String deviceName, String deviceGroup, String userUuid, String remark) {
+    private void testDeviceRegister(String uuid, String deviceName, String deviceGroup, String userUuid, String signature, String remark) {
         try {
-            RegisterDeviceRequest deviceRequest = new RegisterDeviceRequest(uuid, deviceName, deviceGroup, userUuid, remark);
+            RegisterDeviceRequest deviceRequest = new RegisterDeviceRequest(uuid, deviceName, deviceGroup, userUuid, signature, remark);
 //            RegisterManagerRequest registerRequest = new RegisterManagerRequest(username, email, phone, password, "manager");
 //            ResponseResult<String> registerResponse = client.managerRegister(registerRequest);
             ResponseResult<String> registerResponse = client.deviceRegister(deviceRequest);

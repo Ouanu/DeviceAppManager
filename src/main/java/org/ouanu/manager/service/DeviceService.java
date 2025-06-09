@@ -1,6 +1,5 @@
 package org.ouanu.manager.service;
 
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -9,73 +8,79 @@ import jakarta.persistence.criteria.Root;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.command.DeviceCreateCommand;
+import org.ouanu.manager.common.DeviceAuthentication;
 import org.ouanu.manager.dto.DeviceDto;
-import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.exception.DeviceNotFoundException;
 import org.ouanu.manager.model.Device;
-import org.ouanu.manager.model.User;
 import org.ouanu.manager.query.DeviceQuery;
 import org.ouanu.manager.repository.DeviceRepository;
-import org.ouanu.manager.repository.UserRepository;
 import org.ouanu.manager.request.RegisterDeviceRequest;
 import org.ouanu.manager.response.DeviceResponse;
 import org.ouanu.manager.response.DeviceTokenResponse;
 import org.ouanu.manager.utils.JwtUtils;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class DeviceService {
     private final DeviceRepository deviceRepository;
-    private final UserRepository userRepository;
-    private final AuthenticationManager authManager;
     private final JwtUtils jwtUtils;
     private final EntityManager entityManager;
 
-    public DeviceTokenResponse authenticate(String uuid, String userUuid) {
+    public DeviceTokenResponse authenticate(String uuid, String signature) {
         if (!deviceRepository.existsByUuid(uuid)) {
             return new DeviceTokenResponse("");
         }
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(uuid, userUuid);
-        Authentication auth = authManager.authenticate(
-                authenticationToken
-        );
-        loginUpdateLastModifiedTime(uuid);
-        return new DeviceTokenResponse(jwtUtils.generateJwtToken(auth));
+        Device device = deviceRepository.findByUuid(uuid).orElseThrow(() -> new DeviceNotFoundException(HttpStatus.NOT_FOUND, "Device not found."));
+        if (device != null) {
+            DeviceAuthentication auth = new DeviceAuthentication(uuid, signature, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER")));
+            loginUpdateLastModifiedTime(uuid);
+            return new DeviceTokenResponse(jwtUtils.deviceGenerateJwtToken(auth));
+        } else {
+            throw new DeviceNotFoundException(HttpStatus.NOT_FOUND, "Device not found.");
+        }
     }
 
     @Transactional
-    public void createDevice(DeviceCreateCommand command) {
-        User user = userRepository.findByUuid(command.userUuid()).orElseThrow(() -> new UsernameNotFoundException("用户未找到"));
-        if (deviceRepository.existsByUuid(command.uuid())) {
-            throw new ConflictException("设备已存在");
+    public boolean createDevice(DeviceCreateCommand command) {
+        try {
+            if (deviceRepository.existsByUuid(command.uuid())) {
+                throw new ConflictException("Device is already exists.");
+            }
+
+            if (!command.signature().equals("Fq9gzy85kxbpdNPIEHjNOv7TwkhZIsieT3qmQ1Dg10k=")) {
+                throw new AccessDeniedException("Access Denied");
+            }
+
+            Device device = command.toEntity();
+            device.setCreateTime(LocalDateTime.now());
+            device.setLastModifiedTime(LocalDateTime.now());
+            device.setSignature(command.signature());
+            deviceRepository.save(device);
+
+            if (!deviceRepository.existsByUuid(device.getUuid())) {
+                System.out.println("Device Service: createDevice(DeviceCreateCommand command) >> Create device failed.");
+                throw new ConflictException("Failed to create the device.");
+            }
+
+            System.out.println("Device Service: createDevice(DeviceCreateCommand command) >> Create device succeed.");
+            return true;
+        } catch (Exception e) {
+            return false;
         }
 
-        Device device = command.toEntity();
-        device.setCreateTime(LocalDateTime.now());
-        device.setLastModifiedTime(LocalDateTime.now());
-        device.setOwner(user);
-        device.setUserUuid(user.getUuid());
-        deviceRepository.save(device);
-
-        if (!deviceRepository.existsByUuid(device.getUuid())) {
-            throw new ConflictException("设备创建失败");
-        }
     }
 
 
@@ -96,6 +101,10 @@ public class DeviceService {
         dto.setCreateTime(device.getCreateTime());
         dto.setLastModifiedTime(device.getLastModifiedTime());
         return dto;
+    }
+
+    public Device loadDeviceByUuid(String uuid) throws DeviceNotFoundException {
+        return deviceRepository.findByUuid(uuid).orElseThrow(() -> new DeviceNotFoundException(HttpStatus.NOT_FOUND, "设备未找到"));
     }
 
     public DeviceResponse findDevice(String uuid) throws DeviceNotFoundException {
@@ -156,9 +165,29 @@ public class DeviceService {
         return list;
     }
 
-    public void register(@Valid RegisterDeviceRequest request) {
+    public boolean register(@Valid RegisterDeviceRequest request) {
         DeviceCreateCommand command = request.toCommand();
-        createDevice(command);
+        return createDevice(command);
+    }
+
+    public DeviceResponse item() {
+        try {
+            System.out.println("DeviceService ================ ");
+            Authentication auth =  SecurityContextHolder.getContext().getAuthentication();
+            String principal = (String) auth.getPrincipal();
+            String credentials = (String) auth.getCredentials();
+            System.out.println("principal = " + principal + " credentials = " + credentials);
+            Device device = deviceRepository.findByUuid(principal).orElseThrow(() -> new DeviceNotFoundException(HttpStatus.NOT_FOUND, "Device can not be found"));
+            if (device.getSignature().equals(credentials)) {
+                return DeviceResponse.fromEntity(device);
+            }
+            return null;
+        } catch (Exception e) {
+            System.out.println("DeviceService error = " + e.getMessage());
+            return null;
+        }
+
+
     }
 
 //    private boolean checkPermission(String userUuid) {

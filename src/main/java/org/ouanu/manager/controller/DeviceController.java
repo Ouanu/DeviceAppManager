@@ -2,6 +2,7 @@ package org.ouanu.manager.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.ouanu.manager.common.ResponseResult;
 import org.ouanu.manager.query.DeviceQuery;
 import org.ouanu.manager.request.RegisterDeviceRequest;
@@ -24,8 +25,12 @@ public class DeviceController {
     private final DeviceService deviceService;
 
     @PostMapping("/login")
-    private ResponseEntity<ResponseResult<DeviceTokenResponse>> login(String uuid, String userUuid) {
-        DeviceTokenResponse response = deviceService.authenticate(uuid, userUuid);
+    private ResponseEntity<ResponseResult<DeviceTokenResponse>> login(String uuid, String signature) {
+        return loginDevice(uuid, signature);
+    }
+
+    private @NotNull ResponseEntity<ResponseResult<DeviceTokenResponse>> loginDevice(String uuid, String signature) {
+        DeviceTokenResponse response = deviceService.authenticate(uuid, signature);
         if (Objects.requireNonNull(response.token()).isEmpty()) {
             return ResponseResult.error(HttpStatus.NOT_FOUND, "Device not be found.");
         }
@@ -38,8 +43,12 @@ public class DeviceController {
     public ResponseEntity<ResponseResult<DeviceTokenResponse>> register(
             @Valid @RequestBody RegisterDeviceRequest request
     ) {
-        deviceService.register(request);
-        return ResponseResult.created();
+        if (deviceService.register(request)) {
+            return loginDevice(request.uuid(), request.signature());
+        } else {
+            return ResponseResult.error(HttpStatus.NOT_FOUND, "Created device failed.");
+        }
+
     }
 
     @GetMapping("/list")
@@ -64,8 +73,9 @@ public class DeviceController {
         return ResponseResult.success(deviceService.findByConditions(query.build()));
     }
 
-    @GetMapping("/item")
-    public ResponseEntity<ResponseResult<DeviceResponse>> item(@RequestParam Map<String, String> params) {
+
+    @GetMapping("/find")
+    public ResponseEntity<ResponseResult<DeviceResponse>> find(@RequestParam Map<String, String> params) {
         if (params.containsKey("uuid")) {
             DeviceResponse device = deviceService.findDevice(params.get("uuid"));
             if (device != null) {
@@ -73,6 +83,16 @@ public class DeviceController {
             }
         }
         return ResponseResult.error(HttpStatus.NOT_FOUND, "设备未找到");
+    }
+
+    @GetMapping("/item")
+    public ResponseEntity<ResponseResult<DeviceResponse>> item() {
+        DeviceResponse item = deviceService.item();
+        if (item == null) {
+            return ResponseResult.error(HttpStatus.NOT_FOUND, "Device can not be found");
+        } else {
+            return ResponseResult.success(item);
+        }
     }
 
 }

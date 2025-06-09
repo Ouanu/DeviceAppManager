@@ -15,6 +15,7 @@ public class DeviceQuery {
     private Boolean active;
     private Boolean locked;
     private String userUuid;
+    private String signature;
     private TimeRange createTimeRange;
     private TimeRange lastModifiedTimeRange;
 
