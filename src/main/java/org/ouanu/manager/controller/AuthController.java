@@ -48,7 +48,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ResponseResult<UserResponse>> me() {
 
-        UserResponse me = authService.me();
+        UserResponse me = authService.getUserInfo();
         if (me == null) {
             return ResponseResult.error(HttpStatus.NOT_FOUND, "User wasn't exists---------");
         } else {

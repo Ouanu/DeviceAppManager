@@ -35,14 +35,14 @@ public class TestClient {
     public static void main(String[] args) {
         TestClient client1 = new TestClient();
 
-        client1.testDeviceRegister(
-                "38:7a:cc:0f:4c:0e",
-                "Test Device",
-                "default",
-                "57522640-ffbb-4232-86e3-966f655b371b",
-                "57522640-ffbb-4232-86e3-966f655b371b",
-                "Only for test"
-        );
+//        client1.testDeviceRegister(
+//                "38:7a:cc:0f:4c:0e",
+//                "Test Device",
+//                "default",
+//                "57522640-ffbb-4232-86e3-966f655b371b",
+//                "57522640-ffbb-4232-86e3-966f655b371b",
+//                "Only for test"
+//        );
 
 //        String s = client1.testLogin("newuser1", "B3123131311");
 //        UserResponse user = client1.getUser(s);
@@ -57,7 +57,7 @@ public class TestClient {
 //        client1.testRegister("newuser2", "B3123131312", "newuser2@qq.com", "13800138002");
 //        client1.testRegister("newuser3", "B3123131313", "newuser3@qq.com", "13800138003");
 //        client1.testRegister("newuser4", "B3123131314", "newuser4@qq.com", "13800138004");
-//        String token = client1.testGetUsers();
+        String token = client1.testGetUsers();
 //        if (!dtos.isEmpty()) {
 //            UserDto dto = dtos.get(1);
 //            try {
@@ -159,8 +159,8 @@ public class TestClient {
     private String testGetUsers() {
         try {
             // 1. 首先获取登录token
-//            LoginRequest loginRequest = new LoginRequest("Manager", "M3123131310");
-            LoginRequest loginRequest = new LoginRequest("newuser1", "B3123131311");
+            LoginRequest loginRequest = new LoginRequest("Manager", "M3123131310");
+//            LoginRequest loginRequest = new LoginRequest("newuser1", "B3123131311");
             ResponseResult<UserTokenResponse> loginResponse = client.login(loginRequest);
 
             if (loginResponse == null || loginResponse.getCode() != 200) {

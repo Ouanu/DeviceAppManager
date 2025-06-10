@@ -2,7 +2,6 @@ package org.ouanu.manager.service;
 
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.command.UserCreateCommand;
-import org.ouanu.manager.dto.UserDto;
 import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.model.User;
 import org.ouanu.manager.repository.UserRepository;
@@ -58,16 +57,8 @@ public class UserService {
                 .orElse(false);
     }
 
-    public UserDto loadUserDtoByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("用户不存在: " + username));
-        UserDto dto = new UserDto();
-        dto.setUuid(user.getUuid());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setPhone(user.getPhone());
-        dto.setRemark(user.getRemark());
-        dto.setCreateTime(user.getCreateTime());
-        return dto;
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User is not exists: " + username));
     }
 }
 

@@ -11,8 +11,13 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 
 @Entity
 @SQLRestriction("is_locked = false") // 替代@Where
@@ -22,7 +27,7 @@ import java.time.LocalDateTime;
 @Table(name = "devices")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Device {
+public class Device implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -74,4 +79,28 @@ public class Device {
     @JoinColumn(name = "user_id")       // 实际存储的是 users.id
     private User owner;
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+    }
+
+    @Override
+    public String getPassword() {
+        return signature;
+    }
+
+    @Override
+    public String getUsername() {
+        return uuid;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !isLocked();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return active;
+    }
 }

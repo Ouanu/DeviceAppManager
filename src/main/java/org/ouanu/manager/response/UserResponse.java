@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.ouanu.manager.dto.UserDto;
+import org.ouanu.manager.model.User;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,18 @@ public class UserResponse {
     private LocalDateTime lastModifiedTime;
 
     public static UserResponse fromEntity(UserDto user) {
+        return UserResponse.builder()
+                .uuid(user.getUuid())
+                .username(user.getUsername())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .remark(user.getRemark())
+                .createTime(user.getCreateTime())
+                .lastModifiedTime(user.getLastModifiedTime())
+                .build();
+    }
+
+    public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
                 .uuid(user.getUuid())
                 .username(user.getUsername())

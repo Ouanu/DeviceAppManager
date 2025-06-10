@@ -4,6 +4,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.ouanu.manager.iface.PermissionCheck;
+import org.ouanu.manager.model.Device;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,11 +21,22 @@ public class PermissionAspect {
     public Object checkUserAccess(ProceedingJoinPoint joinPoint, PermissionCheck permissionCheck) throws Throwable {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication.getPrincipal() instanceof User principal) {
+            if (!principal.isAccountNonLocked() || !principal.isEnabled()) {
+                System.out.println("Access Denied.");
+                throw new AccessDeniedException("Access Denied.");
+            }
             String[] roles = permissionCheck.roles();
             String role = principal.getAuthorities().toString().replace("ROLE_", "").replace("[", "").replace("]", "");
+            System.out.println("checkUserAccess: " + principal.isAccountNonLocked() + "  " + principal.isEnabled());
             System.out.println("checkUserAccess: " + Arrays.toString(roles));
             System.out.println("checkUserAccess: " + role);
             if (!Arrays.toString(roles).contains(role)) {
+                System.out.println("Access Denied.");
+                throw new AccessDeniedException("Access Denied.");
+            }
+            return joinPoint.proceed();
+        } else if (authentication.getPrincipal() instanceof Device principal) {
+            if (!principal.isAccountNonLocked()) {
                 System.out.println("Access Denied.");
                 throw new AccessDeniedException("Access Denied.");
             }

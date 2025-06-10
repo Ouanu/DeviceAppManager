@@ -6,58 +6,56 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
-import org.ouanu.manager.dto.DeviceDto;
-import org.ouanu.manager.model.Device;
+import org.ouanu.manager.common.DeviceAuthenticationToken;
+import org.ouanu.manager.common.UserAuthenticationToken;
+import org.ouanu.manager.service.DeviceDetailsServiceImpl;
 import org.ouanu.manager.service.DeviceService;
-import org.ouanu.manager.utils.JwtUtils;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.ouanu.manager.service.EnhancedJwtService;
+import org.ouanu.manager.service.UserDetailsServiceImpl;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtUtils jwtUtils;
-    private final UserDetailsService userDetailsService;
-    private final DeviceService deviceService;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final DeviceDetailsServiceImpl deviceDetailsService;
+    private final EnhancedJwtService jwtService;
 
-    public JwtAuthFilter(JwtUtils jwtUtils, UserDetailsService userDetailsService, DeviceService deviceService) {
-        this.jwtUtils = jwtUtils;
+    public JwtAuthFilter(UserDetailsServiceImpl userDetailsService, DeviceDetailsServiceImpl deviceDetailsService, DeviceService deviceService, EnhancedJwtService jwtService) {
         this.userDetailsService = userDetailsService;
-        this.deviceService = deviceService;
+        this.deviceDetailsService = deviceDetailsService;
+        this.jwtService = jwtService;
     }
 
     @Override
-    protected void doFilterInternal(@NotNull HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain) throws ServletException, IOException {
         try {
             // 跳过不需要认证的路径
             String token = parseToken(request);
             if (token != null) {
-                String username = jwtUtils.getUsernameFromToken(token);
+                String username = jwtService.getUsernameFromToken(token);
                 if (username != null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     if (userDetails != null) {
-                        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                        UserAuthenticationToken authenticationToken = new UserAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     } else {
-                        Device device = deviceService.loadDeviceByUuid(username);
-                        if (device != null) {
-                            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                                    device.getUuid(),
-                                    device.getSignature(),
-                                    List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))
+                        userDetails = deviceDetailsService.loadUserByUsername(username);
+                        if (userDetails != null) {
+                            DeviceAuthenticationToken authenticationToken = new DeviceAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
                             );
                             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                         }

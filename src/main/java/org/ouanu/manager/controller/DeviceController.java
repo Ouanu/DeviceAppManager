@@ -87,7 +87,7 @@ public class DeviceController {
 
     @GetMapping("/item")
     public ResponseEntity<ResponseResult<DeviceResponse>> item() {
-        DeviceResponse item = deviceService.item();
+        DeviceResponse item = deviceService.getDeviceInfo();
         if (item == null) {
             return ResponseResult.error(HttpStatus.NOT_FOUND, "Device can not be found");
         } else {
