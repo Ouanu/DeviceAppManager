@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/device/register",
                                 "/api/device/login",
+                                "/api/app/**",
                                 "/public/**",
                                 "/error",
                                 "/favicon.ico"

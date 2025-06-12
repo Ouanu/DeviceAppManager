@@ -34,6 +34,7 @@ dependencies {
 	implementation("org.jetbrains:annotations:24.0.0")
 	implementation("com.googlecode.libphonenumber:libphonenumber:8.13.10")
 	implementation("com.google.code.gson:gson:2.10.1")
+	implementation("net.dongliu:apk-parser:2.6.10")
 	compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")
