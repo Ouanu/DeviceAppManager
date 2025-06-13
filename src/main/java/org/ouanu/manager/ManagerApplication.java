@@ -1,6 +1,5 @@
 package org.ouanu.manager;
 
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -11,6 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 public class ManagerApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(ManagerApplication.class, args);
 //		try {
 ////			File file = new File("C:\\Users\\Administrator\\Desktop\\netflix.apk");
@@ -20,6 +20,7 @@ public class ManagerApplication {
 //		} catch (Exception e) {
 //			System.out.println("Error parsing APK: " + e.getMessage());
 //		}
+
 	}
 
 }

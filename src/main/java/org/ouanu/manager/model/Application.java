@@ -35,12 +35,10 @@ public class Application {
     private String versionName;
 
     @Column(nullable = false)
-    @NotBlank(message = "Version Code cannot be null")
     private Long versionCode;
 
     @Column(nullable = false)
-    @NotBlank(message = "App Names cannot be null")
-    private String[] appNames;
+    private String appNames;
 
     @Column(nullable = false)
     private LocalDateTime uploadTime; // The time of application upload.
@@ -50,7 +48,7 @@ public class Application {
 
     @Column(nullable = false)
     @Builder.Default
-    private String[] banRegions = new String[]{""}; // Restricted area for not displaying applications
+    private String banRegions = ""; // Restricted area for not displaying applications
 
     @Column(nullable = false)
     private String fileName; // Download the apk url.

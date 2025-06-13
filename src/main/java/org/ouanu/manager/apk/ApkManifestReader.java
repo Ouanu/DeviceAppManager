@@ -2,11 +2,12 @@ package org.ouanu.manager.apk;
 
 import net.dongliu.apk.parser.ApkFile;
 import net.dongliu.apk.parser.bean.ApkMeta;
+import org.ouanu.manager.model.Application;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -34,6 +35,53 @@ public class ApkManifestReader {
         } catch (IOException e) {
             System.out.println("Apk Reader -------- " + e.getMessage());
             return "";
+        }
+    }
+
+    public static Application readApplicationInfo(File file, String[] banRegions) {
+        if (!file.exists() || !file.isFile()) {
+            return null;
+        }
+        try(ApkFile apkFile = new ApkFile(file)) {
+            ApkMeta apkMeta = apkFile.getApkMeta();
+            Handler handler = new ConsoleHandler();
+            handler.setEncoding("UTF-8");
+            Logger logger = Logger.getLogger(ApkManifestReader.class.getName());
+            logger.addHandler(handler);
+            logger.setUseParentHandlers(false);
+
+            StringBuilder sb = new StringBuilder();
+            Set<String> labels = new HashSet<>();
+            for (Locale locale : apkFile.getLocales()) {
+                apkFile.setPreferredLocale(locale);
+                ApkMeta apkMeta1 = apkFile.getApkMeta();
+                if (labels.add(apkMeta1.getLabel())) {
+                    if (locale.getLanguage().isEmpty()) {
+                        sb.append("default");
+                    } else {
+                        sb.append(locale.getLanguage());
+                    }
+                    sb.append("=").append(apkMeta1.getLabel()).append(",");
+                }
+            }
+
+            Application build = Application.builder()
+                    .packageName(apkMeta.getPackageName())
+                    .label(apkMeta.getLabel())
+                    .versionCode(apkMeta.getVersionCode())
+                    .versionName(apkMeta.getVersionName())
+                    .size(file.length())
+                    .fileName(file.getName())
+                    .uploadTime(LocalDateTime.now())
+                    .appNames(sb.toString())
+                    .banRegions(Arrays.toString(banRegions))
+                    .build();
+            System.out.println("version code = " + build.getVersionCode() );
+            System.out.println("app names = " + build.getAppNames() );
+            return build;
+        } catch (IOException e) {
+            System.out.println("Read application info: " + e.getMessage());
+            return null;
         }
     }
     public static void readManifest(String apkPath) {

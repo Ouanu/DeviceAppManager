@@ -17,7 +17,7 @@ public class ApplicationResponse {
     private String label;
     private String versionName;
     private Long versionCode;
-    private String[] appNames;
+    private String appNames;
     private LocalDateTime uploadTime;
     private Long size;
     private String fileName;

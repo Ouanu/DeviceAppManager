@@ -28,6 +28,7 @@ public class TestClient {
     private static final String BASE_URL = "http://127.0.0.1:8081/api/auth"; // 替换为你的服务器地址
     private static final String BASE_MANAGER_URL = "http://127.0.0.1:8081/api/manager"; // 替换为你的服务器地址
     private static final String BASE_DEVICE_URL = "http://127.0.0.1:8081/api/device"; // 替换为你的服务器地址
+
     private static TestClient client = new TestClient();
     private static RestTemplate restTemplate = new RestTemplate();
     private static List<UserDto> dtos = new ArrayList<>();
