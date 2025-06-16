@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.apk.ApkManifestReader;
+import org.ouanu.manager.common.ResponseResult;
 import org.ouanu.manager.exception.ApplicationNotFoundException;
 import org.ouanu.manager.model.Application;
 import org.ouanu.manager.query.ApplicationQuery;
@@ -109,15 +110,15 @@ public class ApplicationService {
     }
 
     // Upload a single file.
-    public ResponseEntity<String> uploadFile(MultipartFile file, String[] banRegions) {
+    public ResponseEntity<ResponseResult<ApplicationResponse>> uploadFile(MultipartFile file, String[] banRegions) {
         if (file == null || file.isEmpty()) {
             logger.info("The file does not exist.Please select a file to upload.");
-            return ResponseEntity.badRequest().body("The file does not exist.Please select a file to upload.");
+            return ResponseResult.error(HttpStatus.BAD_REQUEST, "The file does not exist.Please select a file to upload.", null);
         }
         String source = uploadDir + file.getOriginalFilename();
         if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".apk")) {
             logger.info("The file does not end with '.apk'. Please check the file format.");
-            return ResponseEntity.badRequest().body("The file does not end with '.apk'. Please check the file format.");
+            return ResponseResult.error(HttpStatus.BAD_REQUEST, "The file does not end with '.apk'. Please check the file format.", null);
         }
         Path path = Path.of(source);
         try {
@@ -127,7 +128,7 @@ public class ApplicationService {
             if (packageName.isEmpty()) {
                 Files.delete(path);
                 logger.info("File: " + source + " is not an apk.");
-                return ResponseEntity.internalServerError().body("File: " + source + " is not an apk.");
+                return ResponseResult.error(HttpStatus.INTERNAL_SERVER_ERROR, "File: " + source + " is not an apk.", null);
             }
             String target = uploadDir + packageName + ".apk";
             String result = renameFile(target, source);
@@ -144,28 +145,30 @@ public class ApplicationService {
                     app.setAppNames(application.getLabel());
                     app.setUploadTime(LocalDateTime.now());
                     repository.save(app);
+                    application = app;
                 } else {
                     repository.save(application);
                 }
                 logger.info("Upload a file succeed: " + result);
-                return ResponseEntity.ok("Upload a file succeed: " + result);
+                return ResponseResult.success("Upload a file succeed: " + result, ApplicationResponse.fromEntity(application));
             } else {
                 logger.info("Upload File: Cannot create or save the application information.");
-                return ResponseEntity.internalServerError().body("Upload File: Cannot create or save the application information.");
+                return ResponseResult.error(HttpStatus.INTERNAL_SERVER_ERROR, "Upload File: Cannot create or save the application information.", null);
             }
         } catch (IOException e) {
             logger.info("Upload a file failed.");
-            return ResponseEntity.internalServerError().body("Upload a file failed.");
+            return ResponseResult.error(HttpStatus.INTERNAL_SERVER_ERROR, "Upload a file failed.", null);
         }
     }
 
     // Upload multiple files.
-    public ResponseEntity<String> uploadFiles(MultipartFile[] files, String[] banRegions) {
+    public ResponseEntity<ResponseResult<List<ApplicationResponse>>> uploadFiles(MultipartFile[] files, String[] banRegions) {
         if (files == null || files.length == 0) {
-            return ResponseEntity.badRequest().body("Please select at least one file for upload.");
+            return ResponseResult.error(HttpStatus.BAD_REQUEST, "Please select at least one file for upload.", null);
         }
         StringBuilder message = new StringBuilder();
         boolean allSuccess = true;
+        List<ApplicationResponse> appList = new ArrayList<>();
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
             if (!Objects.requireNonNull(fileName).endsWith(".apk")) {
@@ -198,8 +201,10 @@ public class ApplicationService {
                         app.setAppNames(application.getLabel());
                         app.setUploadTime(LocalDateTime.now());
                         repository.save(app);
+                        appList.add(ApplicationResponse.fromEntity(app));
                     } else {
                         repository.save(application);
+                        appList.add(ApplicationResponse.fromEntity(application));
                     }
                     message.append("Upload a file succeed: ").append(result).append(".\n");
                 } else {
@@ -218,10 +223,9 @@ public class ApplicationService {
         }
         logger.info(message.toString());
         if (allSuccess) {
-            return ResponseEntity.ok(message.toString());
+            return ResponseResult.success(message.toString(), appList);
         } else {
-            return ResponseEntity.internalServerError()
-                    .body("Some files failed to upload: \n" + message);
+            return ResponseResult.error(HttpStatus.INTERNAL_SERVER_ERROR, "Some files failed to upload: \n" + message, null);
         }
     }
 

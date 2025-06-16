@@ -32,6 +32,16 @@ public class ResponseResult<T> {
         );
     }
 
+    public static <T> ResponseEntity<ResponseResult<T>> success(String message, T data) {
+        return ResponseEntity.ok(
+                new ResponseResult<>(
+                        HttpStatus.OK.value(),
+                        message,
+                        data
+                )
+        );
+    }
+
     public static <T> ResponseEntity<ResponseResult<T>> created() {
         return created(null);
     }
@@ -56,6 +66,16 @@ public class ResponseResult<T> {
                         status.value(),
                         message,
                         null
+                ));
+    }
+
+    public static <T> ResponseEntity<ResponseResult<T>> error(HttpStatus status, String message, T data) {
+        return ResponseEntity
+                .status(status)
+                .body(new ResponseResult<>(
+                        status.value(),
+                        message,
+                        data
                 ));
     }
 }

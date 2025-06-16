@@ -2,6 +2,7 @@ package org.ouanu.manager.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.common.ResponseResult;
+import org.ouanu.manager.model.Application;
 import org.ouanu.manager.response.ApplicationResponse;
 import org.ouanu.manager.service.ApplicationService;
 import org.springframework.core.io.Resource;
@@ -17,7 +18,7 @@ import java.util.List;
 public class ApplicationController {
     private final ApplicationService service;
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(
+    public ResponseEntity<ResponseResult<ApplicationResponse>> uploadFile(
             @RequestParam("file") MultipartFile file, @RequestParam("ban_regions") String[] banRegions) {
         if (banRegions.length == 0) {
             banRegions = new String[]{""};
@@ -26,7 +27,7 @@ public class ApplicationController {
     }
 
     @PostMapping("/multi-upload")
-    public ResponseEntity<String> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("ban_regions") String[] banRegions) {
+    public ResponseEntity<ResponseResult<List<ApplicationResponse>>> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files, @RequestParam("ban_regions") String[] banRegions) {
         if (banRegions.length == 0) {
             banRegions = new String[]{""};
         }
@@ -42,4 +43,10 @@ public class ApplicationController {
     public ResponseEntity<List<ApplicationResponse>> findAll() {
         return ResponseEntity.ok(service.findAll());
     }
+
+//    @PostMapping("/update")
+//    public ResponseEntity<Boolean> update() {
+//
+//    }
+
 }

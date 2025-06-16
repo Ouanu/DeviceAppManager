@@ -1,6 +1,7 @@
 package org.ouanu.manager.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.ouanu.manager.debug.RequestDebugUtil;
 import org.ouanu.manager.filter.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +21,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 @Configuration
@@ -47,7 +51,6 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/device/register",
                                 "/api/device/login",
-                                "/api/app/**",
                                 "/public/**",
                                 "/error",
                                 "/favicon.ico"
@@ -56,7 +59,7 @@ public class SecurityConfig {
                         // 管理接口需要特定IP和MANAGER角色
                         .requestMatchers("/api/manager/list", "/api/manager/delete").access(this::hasIpAndManagerRole) // 限定指定IP和Token
                         .requestMatchers("/api/manager/register").access(this::hasIp) // 限定指定IP管理数据库
-//                        .requestMatchers("/api/manager/list").access(this::hasIp) // 限定指定IP管理数据库
+                        .requestMatchers("/api/app/**").access(this::hasIp) // 限定指定IP管理数据库
                         .anyRequest()
                         .authenticated()
                 )
@@ -105,6 +108,7 @@ public class SecurityConfig {
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
+        System.out.println(RequestDebugUtil.formatRequestDump(request));
         return ip.split(",")[0].trim(); // 处理多级代理情况
     }
 
@@ -120,5 +124,6 @@ public class SecurityConfig {
 //        System.out.println("Loading AuthenticationManager......");
         return config.getAuthenticationManager();
     }
+
 
 }

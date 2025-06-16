@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.ouanu.manager.model.Application;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Data
 @NoArgsConstructor
@@ -33,5 +34,19 @@ public class ApplicationResponse {
                 .size(application.getSize())
                 .fileName(application.getFileName())
                 .build();
+    }
+
+    @Override
+    public String toString() {
+        return "ApplicationResponse{" +
+                "packageName='" + packageName + '\'' +
+                ", label='" + label + '\'' +
+                ", versionName='" + versionName + '\'' +
+                ", versionCode=" + versionCode +
+                ", appNames='" + appNames + '\'' +
+                ", uploadTime=" + uploadTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) +
+                ", size=" + String.format("%.2fMB", size / 1024f / 1024f) +
+                ", fileName='" + fileName + '\'' +
+                '}';
     }
 }
