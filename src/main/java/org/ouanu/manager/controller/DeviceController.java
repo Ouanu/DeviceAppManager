@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.ouanu.manager.common.ResponseResult;
+import org.ouanu.manager.dto.DeviceDto;
+import org.ouanu.manager.iface.PermissionCheck;
 import org.ouanu.manager.query.DeviceQuery;
 import org.ouanu.manager.request.RegisterDeviceRequest;
 import org.ouanu.manager.response.DeviceResponse;
@@ -51,8 +53,21 @@ public class DeviceController {
 
     }
 
+    @PermissionCheck(roles = {"CUSTOMER"})
     @GetMapping("/list")
     public ResponseEntity<ResponseResult<List<DeviceResponse>>> listDevices(@RequestParam Map<String, String> params) {
+        DeviceQuery.DeviceQueryBuilder query = createParams(params);
+        return ResponseResult.success(deviceService.findByConditions(query.build()));
+    }
+
+    @PermissionCheck(roles = {"ADMIN"})
+    @GetMapping("/list_admin")
+    public ResponseEntity<ResponseResult<List<DeviceDto>>> listDevicesByAdmin(@RequestParam Map<String, String> params) {
+        DeviceQuery.DeviceQueryBuilder query = createParams(params);
+        return ResponseResult.success(deviceService.findByAdminConditions(query.build()));
+    }
+
+    private static DeviceQuery.DeviceQueryBuilder createParams(Map<String, String> params) {
         DeviceQuery.DeviceQueryBuilder query = DeviceQuery.builder();
         if (params.containsKey("uuid"))
             query.uuid(params.get("uuid"));
@@ -70,7 +85,27 @@ public class DeviceController {
             query.createTimeRange(new DeviceQuery.TimeRange(LocalDateTime.parse(params.get("startTime")), LocalDateTime.parse(params.get("endTime"))));
         if (params.containsKey("startModifiedTime") && params.containsKey("endModifiedTime"))
             query.lastModifiedTimeRange(new DeviceQuery.TimeRange(LocalDateTime.parse(params.get("startModifiedTime")), LocalDateTime.parse(params.get("endModifiedTime"))));
-        return ResponseResult.success(deviceService.findByConditions(query.build()));
+        return query;
+    }
+
+    @PermissionCheck(roles = {"ADMIN"})
+    @PostMapping("/update_admin")
+    public ResponseEntity<ResponseResult<DeviceDto>> updateDeviceByAdmin(@Valid @RequestBody DeviceDto dto) {
+        DeviceDto result = deviceService.updateDeviceAdmin(dto);
+        if (result == null) {
+            return ResponseResult.error(HttpStatus.NOT_FOUND, "Can't find the device.");
+        }
+        return ResponseResult.success(result);
+    }
+
+    @PermissionCheck(roles = {"ADMIN"})
+    @PostMapping("/delete_admin")
+    public ResponseEntity<ResponseResult<String>> deleteDeviceByAdmin(@Valid @RequestBody DeviceDto dto) {
+        Boolean result = deviceService.deleteDeviceByAdmin(dto);
+        if (!result) {
+            return ResponseResult.error(HttpStatus.NOT_FOUND, "Device can't be deleted.");
+        }
+        return ResponseResult.success("Delete Device: " + dto.getUuid() + " " + dto.getDeviceName() + " succeed.");
     }
 
 

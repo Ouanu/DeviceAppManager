@@ -47,8 +47,8 @@ public class AuthController {
     @PermissionCheck(roles = {"CUSTOMER", "ADMIN"})
     @GetMapping("/me")
     public ResponseEntity<ResponseResult<UserResponse>> me() {
-
         UserResponse me = authService.getUserInfo();
+        System.out.println(me);
         if (me == null) {
             return ResponseResult.error(HttpStatus.NOT_FOUND, "User wasn't exists---------");
         } else {

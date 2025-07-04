@@ -17,4 +17,10 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
     @Query("UPDATE Device d SET d.lastModifiedTime = :time WHERE d.uuid = :uuid")
     void updateLoginTime(@Param("uuid") String uuid, @Param("time") LocalDateTime time);
     boolean existsByUuid(String uuid);
+    @Modifying
+    int deleteByUuid(String uuid);
+
+    @Modifying
+    @Query("DELETE FROM User u WHERE u.uuid = :uuid")
+    int hardDeleteByUuid(@Param("uuid") String uuid);
 }

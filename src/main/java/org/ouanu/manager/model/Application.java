@@ -53,5 +53,7 @@ public class Application {
     @Column(nullable = false)
     private String fileName; // Download the apk url.
 
+    @Column(nullable = false)
+    private String iconName;
 
 }

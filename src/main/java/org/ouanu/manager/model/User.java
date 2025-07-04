@@ -74,7 +74,7 @@ public class User implements UserDetails {
     private boolean locked; // 账户是否未锁定
 
     @Column(nullable = false, name = "pwd_update_time")
-    private LocalDateTime passwordUpdateTime; // 可添加密码强制修改时间
+    private LocalDateTime passwordUpdateTime;
 
     @Column(nullable = false, name = "is_active", columnDefinition = "BOOLEAN DEFAULT true")
     private boolean active; // 账户是否启用

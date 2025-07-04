@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK Upload Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-container {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .upload-container:hover {
+            border-color: #999;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        #fileList {
+            margin-top: 10px;
+            text-align: left;
+        }
+        .file-item {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+        }
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .progress {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+<h1>APK Upload Manager</h1>
+
+<div class="upload-container">
+    <h2>上传APK文件</h2>
+    <form id="singleUploadForm" enctype="multipart/form-data">
+        <input type="file" id="singleFile" name="file" accept=".apk" required>
+        <button type="submit" class="btn">上传</button>
+    </form>
+</div>
+
+<div class="upload-container">
+    <h2>Multiple Files Upload</h2>
+    <form id="multiUploadForm" enctype="multipart/form-data">
+        <input type="file" id="multiFiles" name="files" accept=".apk" multiple required>
+        <div id="fileList"></div>
+        <button type="submit" class="btn">Upload APKs</button>
+    </form>
+</div>
+
+<div class="progress-container" id="progressContainer">
+    <h3>Upload Progress</h3>
+    <div class="progress-bar">
+        <div class="progress" id="progressBar"></div>
+    </div>
+    <p id="statusText">Uploading files...</p>
+</div>
+
+<script>
+    // Display selected files for multiple upload
+    document.getElementById('multiFiles').addEventListener('change', function(e) {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+
+        if (this.files.length > 0) {
+            fileList.innerHTML = '<strong>Selected files:</strong>';
+            Array.from(this.files).forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.textContent = file.name;
+                fileList.appendChild(fileItem);
+            });
+        }
+    });
+
+    // Handle single file upload
+    document.getElementById('singleUploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        uploadFile(this, 'http://localhost:8081/api/app/upload');
+    });
+
+    // Handle multiple files upload
+    document.getElementById('multiUploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        uploadFile(this, '/api/app/multi-upload');
+    });
+
+    function uploadFile(form, url) {
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        statusText.textContent = 'Uploading files...';
+
+        const formData = new FormData(form);
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+            }
+        });
+
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                statusText.textContent = 'Upload successful!';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('Upload response:', response);
+                    // You can display the response data to the user here
+                } catch (e) {
+                    console.error('Error parsing response:', e);
+                }
+            } else {
+                statusText.textContent = 'Upload failed: ' + xhr.statusText;
+            }
+        });
+
+        xhr.addEventListener('error', function() {
+            statusText.textContent = 'Upload failed due to network error';
+        });
+
+        xhr.open('POST', url, true);
+        xhr.send(formData);
+    }
+</script>
+</body>
+</html>

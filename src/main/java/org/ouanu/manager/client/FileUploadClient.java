@@ -1,9 +1,11 @@
 package org.ouanu.manager.client;
 
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.ouanu.manager.common.GsonUtils;
 import org.ouanu.manager.common.ResponseResult;
 import org.ouanu.manager.model.Application;
+import org.ouanu.manager.request.ApplicationInfoRequest;
 import org.ouanu.manager.response.ApplicationResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -27,6 +29,8 @@ public class FileUploadClient {
     private static final String UPLOAD_URL = "http://localhost:8081/api/app/upload";
     private static final String MULTI_UPLOAD_URL = "http://localhost:8081/api/app/multi-upload";
     private static final String LIST_URL = "http://localhost:8081/api/app/list";
+    private static final String SAVE_ONE_URL = "http://localhost:8081/api/app/save";
+
     // 单文件上传带进度显示
     public static ResponseResult<Application> uploadFile(Path filePath, String[] banRegions, UploadProgressListener listener) throws IOException {
         String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
@@ -86,10 +90,10 @@ public class FileUploadClient {
 
         String response = readResponse(connection, connection.getResponseCode());
         return GsonUtils.getGson().fromJson(response,
-                new TypeToken<ResponseResult<ApplicationResponse>>(){}.getType());
+                new TypeToken<ResponseResult<ApplicationResponse>>() {
+                }.getType());
     }
 
-    // 多文件上传带进度显示
     public static ResponseResult<List<ApplicationResponse>> uploadMultipleFiles(Path[] filePaths, String[] banRegions, UploadProgressListener listener) throws IOException {
         String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
         HttpURLConnection connection = (HttpURLConnection) new URL(MULTI_UPLOAD_URL).openConnection();
@@ -98,7 +102,6 @@ public class FileUploadClient {
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
-        // 计算总大小
         long totalBytes = calculateMultiFormDataSize(boundary, filePaths, banRegions);
 
         try (OutputStream os = connection.getOutputStream();
@@ -107,7 +110,6 @@ public class FileUploadClient {
             long totalBytesWritten = 0;
 
             for (Path filePath : filePaths) {
-                // 写入文件头
                 String fileHeader = "--" + boundary + "\r\n" +
                         "Content-Disposition: form-data; name=\"files\"; filename=\"" + filePath.getFileName().toString() + "\"\r\n" +
                         "Content-Type: " + getContentType(filePath) + "\r\n\r\n";
@@ -115,7 +117,6 @@ public class FileUploadClient {
                 writer.flush();
                 totalBytesWritten += fileHeader.length();
 
-                // 写入文件内容
                 try (InputStream fileInput = Files.newInputStream(filePath)) {
                     byte[] buffer = new byte[4096];
                     int bytesRead;
@@ -126,13 +127,11 @@ public class FileUploadClient {
                     }
                 }
 
-                // 写入文件分隔符
                 writer.append("\r\n");
                 writer.flush();
                 totalBytesWritten += 2;
             }
 
-            // 写入ban_regions参数
             String regionsHeader = "--" + boundary + "\r\n" +
                     "Content-Disposition: form-data; name=\"ban_regions\"\r\n\r\n" +
                     String.join(",", banRegions) + "\r\n";
@@ -140,7 +139,6 @@ public class FileUploadClient {
             writer.flush();
             totalBytesWritten += regionsHeader.length();
 
-            // 写入结束标记
             String footer = "--" + boundary + "--\r\n";
             writer.append(footer);
             writer.flush();
@@ -148,10 +146,42 @@ public class FileUploadClient {
             updateProgress(listener, totalBytesWritten, totalBytes);
         }
 
-        // 读取响应
         String response = readResponse(connection, connection.getResponseCode());
-        Type type = new TypeToken<ResponseResult<List<ApplicationResponse>>>(){}.getType();
+        Type type = new TypeToken<ResponseResult<List<ApplicationResponse>>>() {
+        }.getType();
         return GsonUtils.getGson().fromJson(response, type);
+    }
+
+    public static ResponseResult<String> saveOne(ApplicationInfoRequest request) throws IOException {
+        URL url = new URL(SAVE_ONE_URL);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        try {
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setDoOutput(true);
+            Gson gson = new Gson();
+            String requestBody = gson.toJson(request);
+            try (OutputStream os = connection.getOutputStream()) {
+                os.write(requestBody.getBytes(StandardCharsets.UTF_8));
+            }
+
+            int responseCode = connection.getResponseCode();
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(
+                            responseCode < 400 ?
+                                    connection.getInputStream() :
+                                    connection.getErrorStream(),
+                            StandardCharsets.UTF_8))) {
+                String response = br.lines().collect(Collectors.joining());
+                System.out.println("response: " + response);
+                return gson.fromJson(response, new TypeToken<ResponseResult<String>>() {
+                }.getType());
+            }
+        } finally {
+            connection.disconnect();
+        }
     }
 
     public static List<ApplicationResponse> findAll() throws IOException {
@@ -164,7 +194,7 @@ public class FileUploadClient {
                     builder.build().toUri(),
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
-                    new ParameterizedTypeReference<List<ApplicationResponse>>() {
+                    new ParameterizedTypeReference<>() {
                     }
             );
             return responseEntity.getBody();
@@ -185,7 +215,6 @@ public class FileUploadClient {
         }
     }
 
-    // 计算表单数据部分的总大小
     private static long calculateFormDataSize(String boundary, Path filePath, String[] banRegions) {
         String fileName = filePath.getFileName().toString();
         String fileHeader = "--" + boundary + "\r\n" +
@@ -201,7 +230,6 @@ public class FileUploadClient {
         return fileHeader.length() + regionsHeader.length() + footer.length();
     }
 
-    // 计算当前已写入的表单数据字节数
     private static long calculateFormDataBytesWritten(String boundary, Path filePath, long fileBytesWritten, long totalFileBytes) {
         String fileName = filePath.getFileName().toString();
         String fileHeader = "--" + boundary + "\r\n" +
@@ -253,12 +281,6 @@ public class FileUploadClient {
     }
 
     public interface UploadProgressListener {
-        /**
-         * 上传进度回调
-         * @param bytesUploaded 已上传字节数
-         * @param totalBytes 总字节数
-         * @param percentage 上传百分比(0-100)
-         */
         void onProgress(long bytesUploaded, long totalBytes, int percentage);
     }
 }

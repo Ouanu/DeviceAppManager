@@ -22,6 +22,7 @@ public class ApplicationResponse {
     private LocalDateTime uploadTime;
     private Long size;
     private String fileName;
+    private String iconName;
 
     public static ApplicationResponse fromEntity(Application application) {
         return ApplicationResponse.builder()
@@ -33,6 +34,7 @@ public class ApplicationResponse {
                 .uploadTime(application.getUploadTime())
                 .size(application.getSize())
                 .fileName(application.getFileName())
+                .iconName(application.getIconName())
                 .build();
     }
 
@@ -47,6 +49,7 @@ public class ApplicationResponse {
                 ", uploadTime=" + uploadTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) +
                 ", size=" + String.format("%.2fMB", size / 1024f / 1024f) +
                 ", fileName='" + fileName + '\'' +
+                ", iconName='" + iconName + '\'' +
                 '}';
     }
 }

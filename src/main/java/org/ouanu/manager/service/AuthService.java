@@ -37,12 +37,15 @@ public class AuthService {
     public UserResponse getUserInfo() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            System.out.println(auth);
+            System.out.println(auth.getPrincipal());
+            System.out.println(auth.getAuthorities());
+            System.out.println(auth.getCredentials());
+            System.out.println(auth.getDetails());
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
             User user = userService.loadUserByUsername(userDetails.getUsername());
-            if (userService.validateCredentials(userDetails.getUsername(), userDetails.getPassword())) {
-                return UserResponse.fromEntity(user);
-            }
-            return null;
+            return UserResponse.fromEntity(user);
+//            return null;
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return null;

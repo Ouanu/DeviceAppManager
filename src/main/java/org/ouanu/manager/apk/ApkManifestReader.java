@@ -2,9 +2,12 @@ package org.ouanu.manager.apk;
 
 import net.dongliu.apk.parser.ApkFile;
 import net.dongliu.apk.parser.bean.ApkMeta;
+import net.dongliu.apk.parser.bean.IconFace;
 import org.ouanu.manager.model.Application;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -38,7 +41,7 @@ public class ApkManifestReader {
         }
     }
 
-    public static Application readApplicationInfo(File file, String[] banRegions) {
+    public static Application readApplicationInfo(File file) {
         if (!file.exists() || !file.isFile()) {
             return null;
         }
@@ -65,6 +68,30 @@ public class ApkManifestReader {
                 }
             }
 
+            List<IconFace> allIcons = apkFile.getAllIcons();
+            IconFace maxIcon = null;
+
+            if (!allIcons.isEmpty()) {
+                for (IconFace icon : allIcons) {
+                    if (maxIcon == null) {
+                        maxIcon = icon;
+                        continue;
+                    }
+                    if (maxIcon.getData().length < icon.getData().length) {
+                        maxIcon = icon;
+                    }
+                    logger.info(apkMeta.getPackageName() + " " + "icon byte size: " + icon.getData().length);
+                }
+            }
+
+            File iconFile = new File("./icons", apkMeta.getPackageName() + ".jpg");
+            if (maxIcon != null) {
+                FileOutputStream fos = new FileOutputStream(iconFile);
+                fos.write(maxIcon.getData());
+                fos.flush();
+                fos.close();
+            }
+
             Application build = Application.builder()
                     .packageName(apkMeta.getPackageName())
                     .label(apkMeta.getLabel())
@@ -72,10 +99,11 @@ public class ApkManifestReader {
                     .versionName(apkMeta.getVersionName())
                     .size(file.length())
                     .fileName(file.getName())
+                    .iconName(iconFile.getName())
                     .uploadTime(LocalDateTime.now())
                     .appNames(sb.toString())
-                    .banRegions(Arrays.toString(banRegions))
                     .build();
+
             System.out.println("version code = " + build.getVersionCode() );
             System.out.println("app names = " + build.getAppNames() );
             return build;

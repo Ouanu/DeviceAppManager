@@ -77,4 +77,14 @@ public class ManagerController {
                 ResponseResult.success() :
                 ResponseResult.error(HttpStatus.NOT_FOUND, "用户不存在");
     }
+
+    @PermissionCheck(roles = {"ADMIN"})
+    @PostMapping("/update")
+    public ResponseEntity<ResponseResult<UserDto>> updateUserInfo(@Valid @RequestBody UserDto request) {
+        UserDto dto = service.updateUser(request);
+        if (dto == null) {
+            return ResponseResult.error(HttpStatus.NOT_FOUND, "Cannot find the user.");
+        }
+        return ResponseResult.success("Update User info success", dto);
+    }
 }

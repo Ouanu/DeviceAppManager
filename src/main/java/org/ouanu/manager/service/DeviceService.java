@@ -9,11 +9,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ouanu.manager.command.DeviceCreateCommand;
 import org.ouanu.manager.common.DeviceAuthenticationToken;
+import org.ouanu.manager.dto.DeviceDto;
 import org.ouanu.manager.exception.ConflictException;
 import org.ouanu.manager.exception.DeviceNotFoundException;
 import org.ouanu.manager.model.Device;
+import org.ouanu.manager.model.User;
 import org.ouanu.manager.query.DeviceQuery;
 import org.ouanu.manager.repository.DeviceRepository;
+import org.ouanu.manager.repository.UserRepository;
 import org.ouanu.manager.request.RegisterDeviceRequest;
 import org.ouanu.manager.response.DeviceResponse;
 import org.ouanu.manager.response.DeviceTokenResponse;
@@ -29,11 +32,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class DeviceService {
     private final DeviceRepository deviceRepository;
+    private final UserRepository userRepository;
     private final EntityManager entityManager;
     private final EnhancedJwtService jwtService;
 
@@ -86,7 +91,27 @@ public class DeviceService {
         return DeviceResponse.fromEntity(device);
     }
 
+    public List<DeviceDto> findByAdminConditions(DeviceQuery query) {
+        List<Device> devices = findDevices(query);
+        List<DeviceDto> list = new ArrayList<>();
+        for (Device device : devices) {
+            DeviceDto dto = DeviceDto.fromEntity(device);
+            list.add(dto);
+        }
+        return list;
+    }
+
     public List<DeviceResponse> findByConditions(DeviceQuery query) {
+        List<Device> devices = findDevices(query);
+        List<DeviceResponse> list = new ArrayList<>();
+        for (Device device : devices) {
+            DeviceResponse dto = DeviceResponse.fromEntity(device);
+            list.add(dto);
+        }
+        return list;
+    }
+
+    private List<Device> findDevices(DeviceQuery query) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Device> cq = cb.createQuery(Device.class);
         Root<Device> root = cq.from(Device.class);
@@ -130,13 +155,7 @@ public class DeviceService {
             }
         }
         cq.where(predicates.toArray(new Predicate[0]));
-        List<Device> devices = entityManager.createQuery(cq).getResultList();
-        List<DeviceResponse> list = new ArrayList<>();
-        for (Device device : devices) {
-            DeviceResponse dto = DeviceResponse.fromEntity(device);
-            list.add(dto);
-        }
-        return list;
+        return entityManager.createQuery(cq).getResultList();
     }
 
     public boolean register(@Valid RegisterDeviceRequest request) {
@@ -163,6 +182,35 @@ public class DeviceService {
             System.out.println("DeviceService error = " + e.getMessage());
             return null;
         }
+    }
+
+    public DeviceDto updateDeviceAdmin(DeviceDto dto) {
+        Optional<Device> optional = deviceRepository.findByUuid(dto.getUuid());
+        if (optional.isEmpty()) {
+            return null;
+        }
+        Device device = optional.get();
+        String userUuid = dto.getUserUuid();
+        Optional<User> optionalUser = userRepository.findByUuid(userUuid);
+        optionalUser.ifPresent(device::setOwner);
+        device.setLocked(dto.isLocked());
+        device.setActive(dto.isActive());
+        if (dto.getDeviceName() != null) {
+            device.setDeviceName(dto.getDeviceName());
+        }
+        if (dto.getDeviceGroup() != null) {
+            device.setDeviceGroup(dto.getDeviceGroup());
+        }
+        if (dto.getRemark() != null) {
+            device.setRemark(dto.getRemark());
+        }
+        Device save = deviceRepository.save(device);
+        return DeviceDto.fromEntity(save);
+    }
+
+    public Boolean deleteDeviceByAdmin(DeviceDto dto) {
+        int i = deviceRepository.deleteByUuid(dto.getUuid());
+        return i != 0;
     }
 
 }

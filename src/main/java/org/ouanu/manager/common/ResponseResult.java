@@ -26,7 +26,7 @@ public class ResponseResult<T> {
         return ResponseEntity.ok(
                 new ResponseResult<>(
                         HttpStatus.OK.value(),
-                        "操作成功",
+                        "ok",
                         data
                 )
         );

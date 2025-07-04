@@ -58,7 +58,8 @@ public class TestClient {
 //        client1.testRegister("newuser2", "B3123131312", "newuser2@qq.com", "13800138002");
 //        client1.testRegister("newuser3", "B3123131313", "newuser3@qq.com", "13800138003");
 //        client1.testRegister("newuser4", "B3123131314", "newuser4@qq.com", "13800138004");
-        String token = client1.testGetUsers();
+        client1.testRegister("newuser6", "B3123131316", "newuser6@qq.com", "13800138006");
+//        String token = client1.testGetUsers();
 //        if (!dtos.isEmpty()) {
 //            UserDto dto = dtos.get(1);
 //            try {

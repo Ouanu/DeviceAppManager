@@ -16,16 +16,14 @@ import org.ouanu.manager.query.UserQuery;
 import org.ouanu.manager.repository.UserRepository;
 import org.ouanu.manager.request.DeleteUserOrManagerRequest;
 import org.ouanu.manager.request.RegisterManagerRequest;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -128,5 +126,28 @@ public class ManagerService {
         if (!userRepository.existsByUsername(command.username())) {
             throw new ConflictException("用户名创建失败");
         }
+    }
+
+    @Transactional
+    public UserDto updateUser(UserDto dto) {
+        Optional<User> byUuid = userRepository.findByUuid(dto.getUuid());
+        if (byUuid.isEmpty()) {
+            return null;
+        }
+        User user = byUuid.get();
+        if (dto.getUsername() != null) user.setUsername(dto.getUsername());
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getPassword() != null) {
+            user.setPassword(dto.getPassword());
+            user.setPasswordUpdateTime(LocalDateTime.now());
+        }
+        if (dto.getRole() != null) user.setRole(dto.getRole());
+        if (dto.getRemark() != null) user.setRemark(dto.getRemark());
+        if (dto.getExpireDate() != null) user.setExpireDate(dto.getExpireDate());
+        user.setLocked(dto.isLocked());
+        user.setActive(dto.isActive());
+        User save = userRepository.save(user);
+        return UserDto.fromEntity(save);
     }
 }

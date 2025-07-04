@@ -19,4 +19,8 @@ public interface AppRepository extends JpaRepository<Application, Long> {
     void updateLoginTime(@Param("packageName") String packageName, @Param("uploadTime") LocalDateTime uploadTime);
 
     boolean existsByPackageName(String packageName);
+
+    @Modifying
+    int deleteByPackageName(String packageName);
+
 }
